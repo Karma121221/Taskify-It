@@ -1,6 +1,6 @@
-# 📘 AI Study Agent
+# Taskitize It!
 
-AI Study Agent helps you generate a personalized study plan from any syllabus PDF. It breaks down your syllabus into structured topics, actionable tasks, and curated online learning resources.
+Taskitize It! helps you generate a personalized study plan from any syllabus PDF. It breaks down your syllabus into structured topics, actionable tasks, and curated online learning resources.
 
 ---
 

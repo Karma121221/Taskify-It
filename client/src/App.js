@@ -183,7 +183,7 @@ function App() {
       {/* Navigation Bar */}
       <nav className="navbar">
         <div className="nav-left">
-          <h1>NeuroPlan</h1>
+          <h1>Taskitize It!</h1>
           <div className="nav-tagline">Upload your syllabus to generate personalized study tasks</div>
         </div>
         <div className="nav-right">
