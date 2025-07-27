@@ -180,148 +180,163 @@ function App() {
 
   return (
     <div className="App">
-      <div className="header-container">
-        <h1>📘 AI Study Planner</h1>
-        <button 
-          onClick={toggleDashboard} 
-          className="dashboard-button"
-        >
-          {showDashboard ? '📚 Back to Tasks' : '📊 Dashboard'}
-        </button>
-      </div>
-
-      {!showDashboard ? (
-        // Main content
-        <>
-          <div className="upload-section">
-            <input type="file" accept=".pdf" onChange={handleFileChange} />
-            <button onClick={handleUpload} disabled={loading}>
-              {loading ? 'Processing...' : 'Upload PDF & Generate Tasks'}
-            </button>
-          </div>
-
-          {error && <p className="error">{error}</p>}
-
+      {/* Navigation Bar */}
+      <nav className="navbar">
+        <div className="nav-left">
+          <h1>NeuroPlan</h1>
+          <div className="nav-tagline">Upload your syllabus to generate personalized study tasks</div>
+        </div>
+        <div className="nav-right">
           {modules.length > 0 && (
             <>
-              <div className="export-container">
-                <button onClick={exportToPDF} className="export-button">
-                  📤 Export as PDF
-                </button>
-              </div>
-
-              <div ref={contentRef} className="module-list">
-                <h2>🔖 Topics To Cover: </h2>
-                {modules.map((module, index) => (
-                  <div key={index} className="module">
-                    <h3>{index + 1}. {module.topic}</h3>
-                    <ul>
-                      {module.tasks.map((task, i) => (
-                        <li key={i} className="task-item">
-                          <div className="task-content">
-                            <div className="task-header">
-                              <input
-                                type="checkbox"
-                                checked={!!checkedTasks[task.description]}
-                                onChange={() => toggleCheck(task.description)}
-                              />
-                              <label>{task.description}</label>
-                            </div>
-                            {task.resources && (
-                              <ul className="resources">
-                                {task.resources.map((res, j) => (
-                                  <li key={j}>
-                                    🔗 <a href={res.url} target="_blank" rel="noreferrer">{res.title}</a>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                          <div className="date-section">
-                            <input
-                              type="date"
-                              className="date-picker"
-                              value={taskDates[task.description] || ''}
-                              onChange={(e) => handleDateChange(task.description, e.target.value)}
-                            />
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+              <button onClick={exportToPDF} className="nav-button">
+                <span>📄</span> Export PDF
+              </button>
+              <button 
+                onClick={toggleDashboard} 
+                className="nav-button"
+              >
+                {showDashboard ? <><span>📚</span> View Tasks</> : <><span>📊</span> Dashboard</>}
+              </button>
             </>
           )}
-        </>
-      ) : (
-        // Dashboard view
-        <div className="dashboard">
-          <h2>📊 Study Progress Dashboard</h2>
-          
-          <div className="progress-container">
-            <h3>Overall Progress</h3>
-            <div className="progress-bar-container">
-              <div 
-                className="progress-bar" 
-                style={{ width: `${calculateProgress()}%` }}
-              ></div>
-              <span className="progress-text">{calculateProgress()}% Complete</span>
+        </div>
+      </nav>
+      
+      <div className="content">
+        {/* Upload Section */}
+        <div className="upload-section">
+          <input type="file" accept=".pdf" onChange={handleFileChange} />
+          <button onClick={handleUpload} disabled={loading}>
+            {loading ? 'Processing...' : 'Upload PDF & Generate Tasks'}
+          </button>
+        </div>
+
+        {error && <p className="error">{error}</p>}
+
+        {!showDashboard ? (
+          // Main content
+          <>
+            {modules.length > 0 && (
+              <>
+                <div ref={contentRef} className="module-list">
+                  <h2>🔖 Topics To Cover</h2>
+                  {modules.map((module, index) => (
+                    <div key={index} className="module">
+                      <h3>{index + 1}. {module.topic}</h3>
+                      <ul>
+                        {module.tasks.map((task, i) => (
+                          <li key={i} className="task-item">
+                            <div className="task-content">
+                              <div className="task-header">
+                                <input
+                                  type="checkbox"
+                                  checked={!!checkedTasks[task.description]}
+                                  onChange={() => toggleCheck(task.description)}
+                                />
+                                <label>{task.description}</label>
+                              </div>
+                              {task.resources && (
+                                <ul className="resources">
+                                  {task.resources.map((res, j) => (
+                                    <li key={j}>
+                                      🔗 <a href={res.url} target="_blank" rel="noreferrer">{res.title}</a>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                            <div className="date-section">
+                              <input
+                                type="date"
+                                className="date-picker"
+                                value={taskDates[task.description] || ''}
+                                onChange={(e) => handleDateChange(task.description, e.target.value)}
+                              />
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          // Dashboard view
+          <div className="dashboard">
+            <div className="header-container">
+              <h2>📊 Study Progress Dashboard</h2>
+              <button className="dashboard-button" onClick={toggleDashboard}>
+                <span>📚</span> View Tasks
+              </button>
+            </div>
+            
+            <div className="progress-container">
+              <h3>Overall Progress</h3>
+              <div className="progress-bar-container">
+                <div 
+                  className="progress-bar" 
+                  style={{ width: `${calculateProgress()}%` }}
+                ></div>
+                <span className="progress-text">{calculateProgress()}% Complete</span>
+              </div>
+            </div>
+            
+            <div className="deadlines-container">
+              <h3>Upcoming Deadlines</h3>
+              {calculateTimeLeft().length > 0 ? (
+                <ul className="deadlines-list">
+                  {calculateTimeLeft().map((task, index) => (
+                    <li key={index} className="deadline-item">
+                      <div className="deadline-info">
+                        <span className="deadline-task">{task.description}</span>
+                        <span className="deadline-date">{task.date.toLocaleDateString()}</span>
+                      </div>
+                      <div className="days-left">
+                        <span className={task.daysLeft < 3 ? 'urgent' : ''}>
+                          {task.daysLeft} {task.daysLeft === 1 ? 'day' : 'days'} left
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No upcoming deadlines or all tasks completed!</p>
+              )}
+            </div>
+            
+            <div className="topic-progress">
+              <h3>Progress by Topic</h3>
+              {modules.map((module, index) => {
+                const totalTopicTasks = module.tasks.length;
+                const completedTopicTasks = module.tasks.filter(task => 
+                  checkedTasks[task.description]
+                ).length;
+                const topicProgress = totalTopicTasks > 0 
+                  ? Math.round((completedTopicTasks / totalTopicTasks) * 100) 
+                  : 0;
+                
+                return (
+                  <div key={index} className="topic-progress-item">
+                    <div className="topic-header">
+                      <span className="topic-name">{module.topic}</span>
+                      <span className="topic-percentage">{topicProgress}%</span>
+                    </div>
+                    <div className="topic-progress-bar-container">
+                      <div 
+                        className="topic-progress-bar" 
+                        style={{ width: `${topicProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          
-          <div className="deadlines-container">
-            <h3>Upcoming Deadlines</h3>
-            {calculateTimeLeft().length > 0 ? (
-              <ul className="deadlines-list">
-                {calculateTimeLeft().map((task, index) => (
-                  <li key={index} className="deadline-item">
-                    <div className="deadline-info">
-                      <span className="deadline-task">{task.description}</span>
-                      <span className="deadline-date">{task.date.toLocaleDateString()}</span>
-                    </div>
-                    <div className="days-left">
-                      <span className={task.daysLeft < 3 ? 'urgent' : ''}>
-                        {task.daysLeft} {task.daysLeft === 1 ? 'day' : 'days'} left
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No upcoming deadlines or all tasks completed!</p>
-            )}
-          </div>
-          
-          <div className="topic-progress">
-            <h3>Progress by Topic</h3>
-            {modules.map((module, index) => {
-              const totalTopicTasks = module.tasks.length;
-              const completedTopicTasks = module.tasks.filter(task => 
-                checkedTasks[task.description]
-              ).length;
-              const topicProgress = totalTopicTasks > 0 
-                ? Math.round((completedTopicTasks / totalTopicTasks) * 100) 
-                : 0;
-              
-              return (
-                <div key={index} className="topic-progress-item">
-                  <div className="topic-header">
-                    <span className="topic-name">{module.topic}</span>
-                    <span className="topic-percentage">{topicProgress}%</span>
-                  </div>
-                  <div className="topic-progress-bar-container">
-                    <div 
-                      className="topic-progress-bar" 
-                      style={{ width: `${topicProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
