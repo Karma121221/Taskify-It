@@ -5,6 +5,7 @@ const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
@@ -43,8 +44,6 @@ app.post('/upload-pdf', upload.single('pdf'), async (req, res) => {
   }
 });
 
-const axios = require('axios');
-
 app.post('/generate-tasks', async (req, res) => {
   const { syllabusText } = req.body;
 
@@ -80,25 +79,24 @@ From it, extract:
 `;
 
     const response = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
-        model: 'qwen/qwen3-235b-a22b-2507:free', // or any model you prefer
-        messages: [
+        contents: [
           {
             role: 'user',
-            content: prompt,
+            parts: [{ text: prompt }],
           },
         ],
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
         },
       }
     );
 
-    let reply = response.data.choices[0].message.content;
+
+    let reply = response.data.candidates[0].content.parts[0].text;
 
     // Remove Markdown code block if present
     reply = reply.replace(/```json|```/g, '').trim();
