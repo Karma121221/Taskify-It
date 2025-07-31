@@ -1,6 +1,6 @@
-# Taskitize It!
+# Taskify It!
 
-Taskitize It! helps you generate a personalized study plan from any syllabus PDF. It breaks down your syllabus into structured topics, actionable tasks, and curated online learning resources.
+Taskify It! helps you generate a personalized study plan from any syllabus PDF. It breaks down your syllabus into structured topics, actionable tasks, and curated online learning resources.
 
 ---
 
