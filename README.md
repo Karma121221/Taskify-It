@@ -11,6 +11,8 @@ Taskitize It! helps you generate a personalized study plan from any syllabus PDF
 - ✅ Track task completion with checkboxes
 - 📄 Export your study plan to a clean, printable PDF
 
+
+- TEST
 ---
 
 ## 🛠️ Tech Stack
