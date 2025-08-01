@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
 const pdfParse = require('pdf-parse');
-const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
+const puppeteer = require('puppeteer');
 require('dotenv').config();
 
 const app = express();
@@ -112,7 +112,6 @@ From it, extract:
   }
 });
 
-const puppeteer = require('puppeteer');
 
 app.post('/export-pdf', async (req, res) => {
   const { htmlContent } = req.body;
