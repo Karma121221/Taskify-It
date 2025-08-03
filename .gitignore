@@ -5,10 +5,10 @@ server/.env
 server/uploads
 
 # Testing
-/coverage
+coverage/
 
 # Production
-/build
+build/
 
 # Logs
 *.log*
