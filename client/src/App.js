@@ -6,6 +6,11 @@ import './styles/darkmode.css';
 import Navbar from './components/navbar';
 import Dashboard from './components/dashboard';
 import AutoSuggestModal from './components/AutoSuggestModal';
+import config from './config';
+
+// Configure axios defaults
+axios.defaults.baseURL = config.API_BASE_URL;
+axios.defaults.timeout = 30000; // 30 seconds
 
 function App() {
   const [pdfFile, setPdfFile] = useState(null);
@@ -85,20 +90,24 @@ function App() {
     try {
       const formData = new FormData();
       formData.append('pdf', pdfFile);
-      const uploadRes = await axios.post('http://localhost:5000/upload-pdf', formData);
+      const uploadRes = await axios.post('/upload-pdf', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       const { text } = uploadRes.data;
       
       // Save syllabus text
       setSyllabusText(text);
   
-      const genRes = await axios.post('http://localhost:5000/generate-tasks', {
+      const genRes = await axios.post('/generate-tasks', {
         syllabusText: text,
       });
   
       setModules(genRes.data.topics);
     } catch (err) {
       console.error(err);
-      setError('❌ Failed to upload or generate tasks.');
+      setError('❌ Failed to upload or generate tasks. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -121,7 +130,7 @@ function App() {
   const exportToPDF = async () => {
     try {
       const html = contentRef.current.innerHTML;
-      const { data } = await axios.post('http://localhost:5000/export-pdf', {
+      const { data } = await axios.post('/export-pdf', {
         htmlContent: `<html><head><style>
           body { font-family: Inter, sans-serif; padding: 20px; }
           h1, h2, h3 { color: #2d3748; }
@@ -145,7 +154,7 @@ function App() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Export failed:', err);
-      alert('❌ Failed to export PDF');
+      alert('❌ Failed to export PDF. Please try again.');
     }
   };
 

@@ -9,33 +9,79 @@ const puppeteer = require('puppeteer');
 require('dotenv').config();
 
 const app = express();
-app.use(express.json());
-app.use(cors());
 
-// 🔗 Connect to MongoDB Atlas
-mongoose.connect(process.env.MONGO_URI);
+// Enhanced CORS configuration for production
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? [
+        'https://taskify-it.onrender.com',
+      ]
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
 
-mongoose.connection.once('open', () => {
-  console.log('✅ Connected to MongoDB Atlas');
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// 📁 Set up multer for file upload
+// 🔗 Connect to MongoDB Atlas
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('✅ Connected to MongoDB Atlas'))
+.catch(err => console.error('❌ MongoDB connection error:', err));
+
+// 📁 Set up multer for file upload with better error handling
 const upload = multer({ 
-  dest: 'uploads/',
+  dest: '/tmp/',
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') cb(null, true);
-    else cb(new Error('Only PDF files are allowed'));
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed'));
+    }
   }
+});
+
+// Error handling middleware for multer
+app.use((error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
+    }
+  }
+  if (error.message === 'Only PDF files are allowed') {
+    return res.status(400).json({ error: 'Only PDF files are allowed' });
+  }
+  next(error);
 });
 
 // 📄 Route: Upload + parse PDF
 app.post('/upload-pdf', upload.single('pdf'), async (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No PDF file uploaded' });
+    }
+
     const dataBuffer = fs.readFileSync(req.file.path);
     const pdfData = await pdfParse(dataBuffer);
 
     // Delete uploaded file after reading
-    fs.unlinkSync(req.file.path);
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (unlinkError) {
+      console.warn('Warning: Could not delete temporary file:', unlinkError.message);
+    }
 
     res.json({ text: pdfData.text });
   } catch (error) {
@@ -92,9 +138,9 @@ From it, extract:
         headers: {
           'Content-Type': 'application/json',
         },
+        timeout: 30000, // 30 second timeout
       }
     );
-
 
     let reply = response.data.candidates[0].content.parts[0].text;
 
@@ -112,20 +158,32 @@ From it, extract:
   }
 });
 
-
 app.post('/export-pdf', async (req, res) => {
   const { htmlContent } = req.body;
 
+  let browser;
   try {
-    const browser = await puppeteer.launch({
+    // Enhanced Puppeteer configuration for Render
+    browser = await puppeteer.launch({
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu'
+      ],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
 
     const page = await browser.newPage();
 
     await page.setContent(htmlContent, {
       waitUntil: 'networkidle0',
+      timeout: 30000,
     });
 
     const pdfBuffer = await page.pdf({
@@ -137,6 +195,7 @@ app.post('/export-pdf', async (req, res) => {
         left: '15mm',
         right: '15mm',
       },
+      timeout: 30000,
     });
 
     await browser.close();
@@ -150,19 +209,49 @@ app.post('/export-pdf', async (req, res) => {
     res.send(pdfBuffer);
   } catch (err) {
     console.error('PDF export failed:', err);
+    if (browser) {
+      try {
+        await browser.close();
+      } catch (closeError) {
+        console.error('Error closing browser:', closeError);
+      }
+    }
     res.status(500).json({ error: 'Failed to generate PDF' });
   }
 });
 
-
-
 // ✅ Test route
 app.get('/', (req, res) => {
-  res.send('API is working!');
+  res.json({ 
+    message: 'Taskify-It API is working!',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// Handle 404
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
 });
 
 // 🚀 Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  mongoose.connection.close(() => {
+    console.log('MongoDB connection closed.');
+    process.exit(0);
+  });
 });
