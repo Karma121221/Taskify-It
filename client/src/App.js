@@ -5,6 +5,7 @@ import './Dashboard.css';
 import './styles/darkmode.css';
 import Navbar from './components/navbar';
 import Dashboard from './components/dashboard';
+import AutoSuggestModal from './components/AutoSuggestModal';
 
 function App() {
   const [pdfFile, setPdfFile] = useState(null);
@@ -16,6 +17,7 @@ function App() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [syllabusText, setSyllabusText] = useState('');
   const [darkMode, setDarkMode] = useState(false);
+  const [showAutoSuggest, setShowAutoSuggest] = useState(false);
 
   const contentRef = useRef();
 
@@ -199,6 +201,13 @@ function App() {
     setDarkMode(!darkMode);
   };
 
+  const handleAutoSuggest = (suggestedDates) => {
+    setTaskDates(prev => ({
+      ...prev,
+      ...suggestedDates
+    }));
+  };
+
   return (
     <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
       <Navbar 
@@ -215,6 +224,14 @@ function App() {
           <button onClick={handleUpload} disabled={loading}>
             {loading ? 'Processing...' : 'Upload PDF & Generate Tasks'}
           </button>
+          {modules.length > 0 && (
+            <button 
+              onClick={() => setShowAutoSuggest(true)} 
+              className="auto-suggest-btn"
+            >
+              📅 Auto-Suggest Dates
+            </button>
+          )}
         </div>
 
         {error && <p className="error">{error}</p>}
@@ -283,6 +300,13 @@ function App() {
       >
         {darkMode ? '☀️' : '🌙'}
       </button>
+
+      <AutoSuggestModal
+        modules={modules}
+        isOpen={showAutoSuggest}
+        onClose={() => setShowAutoSuggest(false)}
+        onApplySuggestions={handleAutoSuggest}
+      />
     </div>
   );
 }
