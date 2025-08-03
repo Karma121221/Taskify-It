@@ -1,0 +1,197 @@
+/* Dark Mode Styles (extracted from App.css and Dashboard.css) */
+
+/* App root */
+.App.dark-mode {
+  background: #1a1a1a;
+  color: #e2e8f0;
+}
+
+/* Toggle button */
+.dark-mode .dark-mode-toggle {
+  background: #2d3748;
+  color: #e2e8f0;
+  border-color: #4a5568;
+}
+
+/* Navbar */
+.dark-mode .navbar {
+  background: linear-gradient(90deg, #2d3748, #4a5568);
+}
+
+/* Upload section */
+.dark-mode .upload-section {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+/* File input */
+.dark-mode input[type="file"] {
+  background: #374151;
+  border-color: #6b7280;
+  color: #e2e8f0;
+}
+
+.dark-mode input[type="file"]:hover {
+  border-color: #60a5fa;
+  background: #1f2937;
+}
+
+/* Error message */
+.dark-mode .error {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+/* Module card */
+.dark-mode .module {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-mode .module h3 {
+  color: #e2e8f0;
+  border-bottom-color: #4a5568;
+}
+
+.dark-mode .module h3::after {
+  background: #60a5fa;
+}
+
+/* Task item */
+.dark-mode .task-item {
+  background: #374151;
+  border-color: #4a5568;
+}
+
+.dark-mode .task-item::before {
+  background: linear-gradient(to bottom, #60a5fa, #3b82f6);
+}
+
+/* Task header text */
+.dark-mode .task-header label {
+  color: #e2e8f0;
+}
+
+/* Date picker section */
+.dark-mode .date-section {
+  border-left-color: #4a5568;
+}
+
+.dark-mode .date-picker {
+  background: #1f2937;
+  border-color: #4a5568;
+  color: #e2e8f0;
+}
+
+.dark-mode .date-picker:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+/* Resources links */
+.dark-mode .resources a {
+  color: #60a5fa;
+}
+
+.dark-mode .resources a:hover {
+  color: #93c5fd;
+}
+
+.dark-mode .resources a::after {
+  background: #60a5fa;
+}
+
+/* Section titles */
+.dark-mode .module-list h2 {
+  color: #e2e8f0;
+}
+
+.dark-mode .module-list h2::after {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+}
+
+/* Dashboard (extracted from Dashboard.css) */
+.dark-mode .dashboard {
+  background: #2d3748;
+}
+
+.dark-mode .dashboard h2 {
+  color: #e2e8f0;
+  border-bottom-color: #4a5568;
+}
+
+.dark-mode .dashboard h2::after {
+  background: #60a5fa;
+}
+
+.dark-mode .dashboard h3 {
+  color: #e2e8f0;
+}
+
+.dark-mode .progress-container,
+.dark-mode .deadlines-container,
+.dark-mode .topic-progress {
+  background: #374151;
+  border-color: #4a5568;
+}
+
+.dark-mode .progress-bar-container {
+  background: #4a5568;
+}
+
+.dark-mode .progress-bar {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+}
+
+.dark-mode .progress-text {
+  color: #e2e8f0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.dark-mode .deadline-item {
+  background: #1f2937;
+  border-left-color: #60a5fa;
+}
+
+.dark-mode .deadline-task {
+  color: #e2e8f0;
+}
+
+.dark-mode .deadline-date {
+  color: #9ca3af;
+}
+
+.dark-mode .days-left {
+  background: #1e3a8a;
+  color: #93c5fd;
+}
+
+.dark-mode .days-left .urgent {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.dark-mode .topic-progress-item {
+  background: #1f2937;
+}
+
+.dark-mode .topic-name {
+  color: #e2e8f0;
+}
+
+.dark-mode .topic-percentage {
+  background: #1e3a8a;
+  color: #93c5fd;
+}
+
+.dark-mode .topic-progress-bar-container {
+  background: #4a5568;
+}
+
+.dark-mode .topic-progress-bar {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+}
+
+.dark-mode .deadlines-container p {
+  color: #d1d5db;
+}
