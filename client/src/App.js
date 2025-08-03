@@ -12,6 +12,7 @@ function App() {
   const [error, setError] = useState(null);
   const [showDashboard, setShowDashboard] = useState(false);
   const [syllabusText, setSyllabusText] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
 
   const contentRef = useRef();
 
@@ -21,11 +22,13 @@ function App() {
     const savedCheckedTasks = localStorage.getItem('checkedTasks');
     const savedTaskDates = localStorage.getItem('taskDates');
     const savedSyllabusText = localStorage.getItem('syllabusText');
+    const savedDarkMode = localStorage.getItem('darkMode');
     
     if (savedModules) setModules(JSON.parse(savedModules));
     if (savedCheckedTasks) setCheckedTasks(JSON.parse(savedCheckedTasks));
     if (savedTaskDates) setTaskDates(JSON.parse(savedTaskDates));
     if (savedSyllabusText) setSyllabusText(savedSyllabusText);
+    if (savedDarkMode) setDarkMode(JSON.parse(savedDarkMode));
   }, []);
 
   // Save data to localStorage whenever it changes
@@ -48,6 +51,16 @@ function App() {
       localStorage.setItem('syllabusText', syllabusText);
     }
   }, [syllabusText]);
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+    // Apply dark mode to document body
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }, [darkMode]);
 
   const handleFileChange = (e) => {
     setPdfFile(e.target.files[0]);
@@ -178,8 +191,13 @@ function App() {
     setShowDashboard(!showDashboard);
   };
 
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
   return (
-    <div className="App">
+    <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
       {/* Navigation Bar */}
       <nav className="navbar">
         <div className="nav-left">
@@ -337,6 +355,15 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* Dark Mode Toggle Button */}
+      <button 
+        className="dark-mode-toggle" 
+        onClick={toggleDarkMode}
+        aria-label="Toggle dark mode"
+      >
+        {darkMode ? '☀️' : '🌙'}
+      </button>
     </div>
   );
 }
