@@ -100,8 +100,8 @@
 
 .nav-button {
   padding: 0.6rem 1.25rem;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(45deg, #4299e1, #3182ce); /* Added gradient */
+  border: none; /* Remove border */
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 500;
@@ -116,9 +116,19 @@
 }
 
 .nav-button:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: linear-gradient(45deg, #3182ce, #2b6cb0); /* Darker gradient on hover */
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Add to :root */
+:root {
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Apply to interactive elements */
+button, .task-item, .module, .upload-section, .nav-button {
+  transition: var(--transition);
 }
 
 /* Updated media queries for better responsiveness */
@@ -377,10 +387,10 @@ button:disabled {
   margin-bottom: 1.5rem;
   padding: 1.5rem;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid #edf2f7;
-  transition: all 0.2s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   width: 100%;
   max-width: 850px;
   margin-left: auto;
@@ -390,8 +400,8 @@ button:disabled {
 }
 
 .task-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .task-item::before {
@@ -400,7 +410,7 @@ button:disabled {
   top: 0;
   left: 0;
   height: 100%;
-  width: 3px;
+  width: 4px; /* Thicker accent bar */
   background: linear-gradient(to bottom, #4299e1, #3182ce);
   transform: scaleY(0);
   transition: transform 0.3s ease;
@@ -576,7 +586,7 @@ button:disabled {
 
 .auto-suggest-btn {
   padding: 0.875rem 1.75rem;
-  background: linear-gradient(45deg, #667eea, #764ba2);
+  background: linear-gradient(45deg, #4299e1, #3182ce); /* Same as upload button */
   color: white;
   border: none;
   border-radius: 8px;
@@ -611,5 +621,17 @@ button:disabled {
 
 /* Dark mode for auto-suggest button */
 .dark-mode .auto-suggest-btn {
-  background: linear-gradient(45deg, #4c51bf, #553c9a);
+  background: linear-gradient(45deg, #4299e1, #3182ce);
+}
+
+button, .auto-suggest-btn, .nav-button {
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+button:hover, .auto-suggest-btn:hover, .nav-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
 }

@@ -255,6 +255,7 @@
 }
 
 .dark-mode .modal-header {
+  background: linear-gradient(90deg, #2d3748, #4a5568); /* Updated to match navbar */
   border-bottom-color: #374151;
 }
 
@@ -319,6 +320,17 @@
 
 .dark-mode .btn-secondary:hover {
   background: #6b7280;
+}
+
+.dark-mode .btn-primary {
+  background: linear-gradient(45deg, #2d3748, #4a5568); /* Updated to match buttons */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(45deg, #374151, #4a5568); /* Darker on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 @media (max-width: 640px) {
