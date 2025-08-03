@@ -1,4 +1,4 @@
-# Taskify It - Syllabus to Study Plan Converter
+# Taskify It - AI-Powered Study Planner
 
 Taskify It is a comprehensive web application that transforms syllabus PDFs into actionable study plans. The application helps students and learners by automating the process of breaking down course materials into manageable tasks with deadlines.
 
