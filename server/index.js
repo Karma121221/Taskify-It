@@ -12,11 +12,34 @@ const app = express();
 
 // Enhanced CORS configuration for production
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://taskify-it.onrender.com',
-      ]
-    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = process.env.NODE_ENV === 'production' 
+      ? [
+          'https://taskify-it.vercel.app',
+          /^https:\/\/taskify-it-.*\.vercel\.app$/,
+          /^https:\/\/.*\.vercel\.app$/
+        ]
+      : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+    
+    // Check if origin is allowed
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return allowedOrigin === origin;
+      } else if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -27,15 +50,28 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Taskify-It API is working!',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // 🔗 Connect to MongoDB Atlas
-mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/taskify', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ Connected to MongoDB Atlas'))
+.then(() => console.log('✅ Connected to MongoDB'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // 📁 Set up multer for file upload with better error handling
@@ -86,6 +122,16 @@ app.post('/upload-pdf', upload.single('pdf'), async (req, res) => {
     res.json({ text: pdfData.text });
   } catch (error) {
     console.error('Error processing PDF:', error);
+    
+    // Clean up file if it exists
+    if (req.file && req.file.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkError) {
+        console.warn('Warning: Could not delete temporary file after error:', unlinkError.message);
+      }
+    }
+    
     res.status(500).json({ error: 'Failed to read PDF' });
   }
 });
@@ -95,6 +141,10 @@ app.post('/generate-tasks', async (req, res) => {
 
   if (!syllabusText) {
     return res.status(400).json({ error: 'Missing syllabus text' });
+  }
+
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(500).json({ error: 'API key not configured' });
   }
 
   try {
@@ -142,24 +192,38 @@ From it, extract:
       }
     );
 
+    if (!response.data.candidates || !response.data.candidates[0]) {
+      throw new Error('Invalid response from AI service');
+    }
+
     let reply = response.data.candidates[0].content.parts[0].text;
 
     // Remove Markdown code block if present
     reply = reply.replace(/```json|```/g, '').trim();
 
-    const cleaned = JSON.parse(reply);
-
-    // ✅ Send response
-    res.json({ topics: cleaned });
+    try {
+      const cleaned = JSON.parse(reply);
+      res.json({ topics: cleaned });
+    } catch (parseError) {
+      console.error('JSON parsing error:', parseError);
+      res.status(500).json({ error: 'Failed to parse AI response' });
+    }
 
   } catch (err) {
     console.error('Task generation error:', err.message);
+    if (err.response) {
+      console.error('API Error Response:', err.response.data);
+    }
     res.status(500).json({ error: 'Failed to generate tasks' });
   }
 });
 
 app.post('/export-pdf', async (req, res) => {
   const { htmlContent } = req.body;
+
+  if (!htmlContent) {
+    return res.status(400).json({ error: 'Missing HTML content' });
+  }
 
   let browser;
   try {
@@ -174,7 +238,9 @@ app.post('/export-pdf', async (req, res) => {
         '--no-first-run',
         '--no-zygote',
         '--single-process',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor'
       ],
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
@@ -220,15 +286,6 @@ app.post('/export-pdf', async (req, res) => {
   }
 });
 
-// ✅ Test route
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Taskify-It API is working!',
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
-  });
-});
-
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
@@ -245,11 +302,21 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📊 MongoDB URI configured: ${!!process.env.MONGO_URI}`);
+  console.log(`🔑 Gemini API configured: ${!!process.env.GEMINI_API_KEY}`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received. Shutting down gracefully...');
+  mongoose.connection.close(() => {
+    console.log('MongoDB connection closed.');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received. Shutting down gracefully...');
   mongoose.connection.close(() => {
     console.log('MongoDB connection closed.');
     process.exit(0);
