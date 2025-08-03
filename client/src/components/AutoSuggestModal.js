@@ -23,7 +23,6 @@ function AutoSuggestModal({
     if (totalDays <= 0) return {};
 
     let suggestedDates = {};
-    let currentDate = new Date(today);
     
     // Count total tasks
     const totalTasks = modules.reduce((sum, module) => sum + module.tasks.length, 0);
