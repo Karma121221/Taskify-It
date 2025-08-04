@@ -18,6 +18,9 @@ const historyRoutes = require('./routes/history');
 
 const app = express();
 
+// Trust proxy - IMPORTANT: Add this early, before other middleware
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
@@ -59,6 +62,11 @@ const corsOptions = {
     
     // Allow Vercel deployments
     if (origin && origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // Allow Render deployments
+    if (origin && origin.includes('onrender.com')) {
       return callback(null, true);
     }
     
@@ -452,18 +460,26 @@ app.listen(PORT, () => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received. Shutting down gracefully...');
-  mongoose.connection.close(() => {
+  try {
+    await mongoose.connection.close();
     console.log('MongoDB connection closed.');
     process.exit(0);
-  });
+  } catch (err) {
+    console.error('Error closing MongoDB connection:', err);
+    process.exit(1);
+  }
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT received. Shutting down gracefully...');
-  mongoose.connection.close(() => {
+  try {
+    await mongoose.connection.close();
     console.log('MongoDB connection closed.');
     process.exit(0);
-  });
+  } catch (err) {
+    console.error('Error closing MongoDB connection:', err);
+    process.exit(1);
+  }
 });
