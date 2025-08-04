@@ -37,7 +37,7 @@ function Navbar({ modules, showDashboard, onExportPdf, onToggleDashboard, onOpen
   return (
     <nav className="navbar">
       <div className="nav-left">
-        <h1>Taskitize It!</h1>
+        <h1>Taskify It!</h1>
         <div className="nav-tagline">Upload your syllabus to generate personalized study tasks</div>
       </div>
       <div className="nav-right">
