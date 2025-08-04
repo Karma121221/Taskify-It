@@ -6,6 +6,8 @@ import './styles/darkmode.css';
 import Navbar from './components/navbar';
 import Dashboard from './components/dashboard';
 import AutoSuggestModal from './components/AutoSuggestModal';
+import AuthModal from './components/auth/AuthModal';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import config from './config';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -13,7 +15,7 @@ import { Analytics } from '@vercel/analytics/react';
 axios.defaults.baseURL = config.API_BASE_URL;
 axios.defaults.timeout = 30000; // 30 seconds
 
-function App() {
+function AppContent() {
   const [pdfFile, setPdfFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [modules, setModules] = useState([]);
@@ -24,7 +26,10 @@ function App() {
   const [syllabusText, setSyllabusText] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [showAutoSuggest, setShowAutoSuggest] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
 
+  const { loading: authLoading } = useAuth();
   const contentRef = useRef();
 
   // Load saved data from localStorage on initial render
@@ -72,6 +77,15 @@ function App() {
       document.body.classList.remove('dark-mode');
     }
   }, [darkMode]);
+
+  // Check for password reset token in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('token')) {
+      setAuthMode('reset');
+      setShowAuthModal(true);
+    }
+  }, []);
 
   const handleFileChange = (e) => {
     setPdfFile(e.target.files[0]);
@@ -218,6 +232,31 @@ function App() {
     }));
   };
 
+  const handleOpenAuth = (mode = 'login') => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
+  };
+
+  const handleCloseAuth = () => {
+    setShowAuthModal(false);
+    // Clear any URL params
+    window.history.replaceState({}, document.title, window.location.pathname);
+  };
+
+  // Show loading spinner during auth check
+  if (authLoading) {
+    return (
+      <div className={`App ${darkMode ? 'dark-mode' : ''}`} style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div className="loading">Checking authentication...</div>
+      </div>
+    );
+  }
+
   return (
     <div className={`App ${darkMode ? 'dark-mode' : ''}`}>
       <Navbar 
@@ -225,6 +264,7 @@ function App() {
         showDashboard={showDashboard}
         onExportPdf={exportToPDF}
         onToggleDashboard={toggleDashboard}
+        onOpenAuth={handleOpenAuth}
       />
 
       <div className="content">
@@ -317,8 +357,23 @@ function App() {
         onClose={() => setShowAutoSuggest(false)}
         onApplySuggestions={handleAutoSuggest}
       />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={handleCloseAuth}
+        initialMode={authMode}
+      />
+
       <Analytics />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

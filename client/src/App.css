@@ -635,3 +635,64 @@ button:hover, .auto-suggest-btn:hover, .nav-button:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
 }
+
+/* Auth Section in Navbar */
+.auth-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-email {
+  color: white;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-btn {
+  background: linear-gradient(45deg, #10b981, #059669);
+  border: none;
+  color: white;
+}
+
+.auth-btn:hover {
+  background: linear-gradient(45deg, #059669, #047857);
+}
+
+.logout-btn {
+  background: linear-gradient(45deg, #ef4444, #dc2626);
+  border: none;
+  color: white;
+}
+
+.logout-btn:hover {
+  background: linear-gradient(45deg, #dc2626, #b91c1c);
+}
+
+/* Dark mode navbar auth styles */
+.dark-mode .user-email {
+  color: #e5e7eb;
+}
+
+/* Responsive auth section */
+@media (max-width: 768px) {
+  .auth-section {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  
+  .user-email {
+    max-width: 150px;
+    font-size: 0.8rem;
+  }
+  
+  .nav-right {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

@@ -6,9 +6,39 @@ const pdfParse = require('pdf-parse');
 const fs = require('fs');
 const axios = require('axios');
 const puppeteer = require('puppeteer');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const compression = require('compression');
 require('dotenv').config();
 
+// Import routes
+const authRoutes = require('./routes/auth');
+
 const app = express();
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
+// Data sanitization against NoSQL query injection
+app.use(mongoSanitize());
+
+// Data sanitization against XSS
+app.use(xss());
+
+// Compression middleware
+app.use(compression());
 
 // Enhanced CORS configuration for production
 const corsOptions = {
@@ -66,13 +96,35 @@ app.get('/', (req, res) => {
   });
 });
 
-// 🔗 Connect to MongoDB Atlas
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/taskify', {
+// Connect to MongoDB Atlas with better configuration
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  maxPoolSize: 10, // Maintain up to 10 socket connections
+  serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  family: 4 // Use IPv4, skip trying IPv6
 })
-.then(() => console.log('✅ Connected to MongoDB'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
+.then(() => {
+  console.log('✅ Connected to MongoDB');
+  console.log('📊 Database Name:', mongoose.connection.name);
+})
+.catch(err => {
+  console.error('❌ MongoDB connection error:', err);
+  process.exit(1);
+});
+
+// MongoDB connection events
+mongoose.connection.on('error', err => {
+  console.error('❌ MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️ MongoDB disconnected');
+});
+
+// Routes
+app.use('/auth', authRoutes);
 
 // 📁 Set up multer for file upload with better error handling
 const upload = multer({ 
@@ -289,12 +341,24 @@ app.post('/export-pdf', async (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+  
+  // Don't leak error details in production
+  const message = process.env.NODE_ENV === 'production' 
+    ? 'Something went wrong!' 
+    : err.message;
+    
+  res.status(500).json({ 
+    status: 'error',
+    message 
+  });
 });
 
 // Handle 404
 app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({ 
+    status: 'error',
+    message: 'Route not found' 
+  });
 });
 
 // 🚀 Start server
@@ -304,6 +368,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📊 MongoDB URI configured: ${!!process.env.MONGO_URI}`);
   console.log(`🔑 Gemini API configured: ${!!process.env.GEMINI_API_KEY}`);
+  console.log(`📧 Email configured: ${!!(process.env.EMAIL_USER && process.env.EMAIL_PASS)}`);
 });
 
 // Graceful shutdown
