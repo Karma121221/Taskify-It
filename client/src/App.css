@@ -713,7 +713,7 @@ button:hover, .auto-suggest-btn:hover, .nav-button:hover {
   font-weight: 500;
   padding: 0.6rem 1rem;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(45deg, #10b981, #059669);
   transition: all 0.2s ease;
   display: block;
   white-space: nowrap;
@@ -814,7 +814,7 @@ button:hover, .auto-suggest-btn:hover, .nav-button:hover {
 }
 
 .dark-mode .username {
-  background: rgba(0, 0, 0, 0.2);
+  background: linear-gradient(45deg, #10b981, #059669);
 }
 
 .dark-mode .username:hover {
