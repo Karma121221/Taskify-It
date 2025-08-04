@@ -5,16 +5,11 @@ const crypto = require('crypto');
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: [true, 'Username or email is required'],
     unique: true,
     lowercase: true,
     trim: true,
-    validate: {
-      validator: function(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      },
-      message: 'Please provide a valid email address'
-    }
+    // Removed email validation - now accepts any username/email
   },
   password: {
     type: String,

@@ -5,6 +5,7 @@ import './Dashboard.css';
 import './styles/darkmode.css';
 import Navbar from './components/navbar';
 import Dashboard from './components/dashboard';
+import History from './components/History';
 import AutoSuggestModal from './components/AutoSuggestModal';
 import AuthModal from './components/auth/AuthModal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -23,13 +24,14 @@ function AppContent() {
   const [taskDates, setTaskDates] = useState({});
   const [error, setError] = useState(null);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [syllabusText, setSyllabusText] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [showAutoSuggest, setShowAutoSuggest] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
 
-  const { loading: authLoading } = useAuth();
+  const { loading: authLoading, isAuthenticated } = useAuth();
   const contentRef = useRef();
 
   // Load saved data from localStorage on initial render
@@ -87,6 +89,30 @@ function AppContent() {
     }
   }, []);
 
+  // Save to history when modules are successfully generated
+  const saveToHistory = async (modules, title = null) => {
+    if (!isAuthenticated || modules.length === 0) return;
+
+    try {
+      const historyData = {
+        title: title || `Study Session ${new Date().toLocaleDateString()}`,
+        modules: modules.map(module => ({
+          topic: module.topic,
+          tasks: module.tasks.map(task => ({
+            description: task.description,
+            resources: task.resources || []
+          }))
+        }))
+      };
+
+      await axios.post('/history', historyData);
+      console.log('History saved successfully');
+    } catch (error) {
+      console.error('Failed to save history:', error);
+      // Don't show error to user as this is non-critical
+    }
+  };
+
   const handleFileChange = (e) => {
     setPdfFile(e.target.files[0]);
     setModules([]);
@@ -110,7 +136,7 @@ function AppContent() {
           'Content-Type': 'multipart/form-data',
         },
       });
-      const { text } = uploadRes.data;
+      const { text } = uploadRes.data.data;
       
       // Save syllabus text
       setSyllabusText(text);
@@ -119,7 +145,14 @@ function AppContent() {
         syllabusText: text,
       });
   
-      setModules(genRes.data.topics);
+      const generatedModules = genRes.data.topics;
+      setModules(generatedModules);
+      
+      // Save to history if user is authenticated
+      if (isAuthenticated) {
+        const title = pdfFile.name.replace('.pdf', '');
+        await saveToHistory(generatedModules, title);
+      }
     } catch (err) {
       console.error(err);
       setError('❌ Failed to upload or generate tasks. Please try again.');
@@ -220,6 +253,18 @@ function AppContent() {
     setShowDashboard(!showDashboard);
   };
 
+  // Navigate to history
+  const navigateToHistory = () => {
+    setShowHistory(true);
+    setShowDashboard(false);
+  };
+
+  // Navigate back to main
+  const navigateBackToMain = () => {
+    setShowHistory(false);
+    setShowDashboard(false);
+  };
+
   // Toggle dark mode
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -265,81 +310,88 @@ function AppContent() {
         onExportPdf={exportToPDF}
         onToggleDashboard={toggleDashboard}
         onOpenAuth={handleOpenAuth}
+        onNavigateToHistory={navigateToHistory}
       />
 
       <div className="content">
-        {/* Upload Section */}
-        <div className="upload-section">
-          <input type="file" accept=".pdf" onChange={handleFileChange} />
-          <button onClick={handleUpload} disabled={loading}>
-            {loading ? 'Processing...' : 'Upload PDF & Generate Tasks'}
-          </button>
-          {modules.length > 0 && (
-            <button 
-              onClick={() => setShowAutoSuggest(true)} 
-              className="auto-suggest-btn"
-            >
-              📅 Auto-Suggest Dates
-            </button>
-          )}
-        </div>
-
-        {error && <p className="error">{error}</p>}
-
-        {!showDashboard ? (
+        {showHistory ? (
+          <History onBackToMain={navigateBackToMain} />
+        ) : (
           <>
-            {modules.length > 0 && (
-              <div ref={contentRef} className="module-list">
-                <h2>🔖 Topics To Cover</h2>
-                {modules.map((module, index) => (
-                  <div key={index} className="module">
-                    <h3>{index + 1}. {module.topic}</h3>
-                    <ul>
-                      {module.tasks.map((task, i) => (
-                        <li key={i} className="task-item">
-                          <div className="task-content">
-                            <div className="task-header">
-                              <input
-                                type="checkbox"
-                                checked={!!checkedTasks[task.description]}
-                                onChange={() => toggleCheck(task.description)}
-                              />
-                              <label>{task.description}</label>
-                            </div>
-                            {task.resources && (
-                              <ul className="resources">
-                                {task.resources.map((res, j) => (
-                                  <li key={j}>
-                                    🔗 <a href={res.url} target="_blank" rel="noreferrer">{res.title}</a>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                          <div className="date-section">
-                            <input
-                              type="date"
-                              className="date-picker"
-                              value={taskDates[task.description] || ''}
-                              onChange={(e) => handleDateChange(task.description, e.target.value)}
-                            />
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+            {/* Upload Section */}
+            <div className="upload-section">
+              <input type="file" accept=".pdf" onChange={handleFileChange} />
+              <button onClick={handleUpload} disabled={loading}>
+                {loading ? 'Processing...' : 'Upload PDF & Generate Tasks'}
+              </button>
+              {modules.length > 0 && (
+                <button 
+                  onClick={() => setShowAutoSuggest(true)} 
+                  className="auto-suggest-btn"
+                >
+                  📅 Auto-Suggest Dates
+                </button>
+              )}
+            </div>
+
+            {error && <p className="error">{error}</p>}
+
+            {!showDashboard ? (
+              <>
+                {modules.length > 0 && (
+                  <div ref={contentRef} className="module-list">
+                    <h2>🔖 Topics To Cover</h2>
+                    {modules.map((module, index) => (
+                      <div key={index} className="module">
+                        <h3>{index + 1}. {module.topic}</h3>
+                        <ul>
+                          {module.tasks.map((task, i) => (
+                            <li key={i} className="task-item">
+                              <div className="task-content">
+                                <div className="task-header">
+                                  <input
+                                    type="checkbox"
+                                    checked={!!checkedTasks[task.description]}
+                                    onChange={() => toggleCheck(task.description)}
+                                  />
+                                  <label>{task.description}</label>
+                                </div>
+                                {task.resources && (
+                                  <ul className="resources">
+                                    {task.resources.map((res, j) => (
+                                      <li key={j}>
+                                        🔗 <a href={res.url} target="_blank" rel="noreferrer">{res.title}</a>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                              <div className="date-section">
+                                <input
+                                  type="date"
+                                  className="date-picker"
+                                  value={taskDates[task.description] || ''}
+                                  onChange={(e) => handleDateChange(task.description, e.target.value)}
+                                />
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
+            ) : (
+              <Dashboard 
+                modules={modules}
+                checkedTasks={checkedTasks}
+                calculateProgress={calculateProgress}
+                calculateTimeLeft={calculateTimeLeft}
+                onToggleDashboard={toggleDashboard}
+              />
             )}
           </>
-        ) : (
-          <Dashboard 
-            modules={modules}
-            checkedTasks={checkedTasks}
-            calculateProgress={calculateProgress}
-            calculateTimeLeft={calculateTimeLeft}
-            onToggleDashboard={toggleDashboard}
-          />
         )}
       </div>
 

@@ -1,8 +1,38 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-function Navbar({ modules, showDashboard, onExportPdf, onToggleDashboard, onOpenAuth }) {
+function Navbar({ modules, showDashboard, onExportPdf, onToggleDashboard, onOpenAuth, onNavigateToHistory }) {
   const { user, logout, isAuthenticated } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const handleLogout = () => {
+    logout();
+    setShowDropdown(false);
+  };
+
+  const handleHistory = () => {
+    onNavigateToHistory();
+    setShowDropdown(false);
+  };
+
+  const handleUsernameClick = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="navbar">
@@ -26,11 +56,22 @@ function Navbar({ modules, showDashboard, onExportPdf, onToggleDashboard, onOpen
         )}
         
         {isAuthenticated ? (
-          <div className="auth-section">
-            <span className="user-email">{user?.email}</span>
-            <button onClick={logout} className="nav-button logout-btn">
-              <span>🚪</span> Logout
-            </button>
+          <div className="user-menu" ref={dropdownRef}>
+            <div className="username-container">
+              <span className="username" onClick={handleUsernameClick}>
+                {user?.email}
+              </span>
+              {showDropdown && (
+                <div className="dropdown-menu">
+                  <button onClick={handleHistory} className="dropdown-item">
+                    <span>📋</span> History
+                  </button>
+                  <button onClick={handleLogout} className="dropdown-item logout">
+                    <span>🚪</span> Log Out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <button onClick={() => onOpenAuth('login')} className="nav-button auth-btn">

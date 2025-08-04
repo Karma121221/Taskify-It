@@ -31,9 +31,7 @@ const Login = ({ onSwitchToRegister, onSwitchToForgotPassword, onClose }) => {
     const newErrors = {};
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Username or email is required';
     }
 
     if (!formData.password) {
@@ -75,15 +73,15 @@ const Login = ({ onSwitchToRegister, onSwitchToForgotPassword, onClose }) => {
         )}
 
         <div className="form-group">
-          <label htmlFor="email">Email Address</label>
+          <label htmlFor="email">Username or Email</label>
           <input
-            type="email"
+            type="text"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             className={errors.email ? 'error' : ''}
-            placeholder="Enter your email"
+            placeholder="Enter your username or email"
             disabled={loading}
           />
           {errors.email && <span className="error-text">{errors.email}</span>}

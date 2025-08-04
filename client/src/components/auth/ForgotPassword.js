@@ -14,12 +14,7 @@ const ForgotPassword = ({ onSwitchToLogin }) => {
     e.preventDefault();
     
     if (!email) {
-      setError('Email is required');
-      return;
-    }
-
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email address');
+      setError('Username or email is required');
       return;
     }
 
@@ -41,13 +36,13 @@ const ForgotPassword = ({ onSwitchToLogin }) => {
       <div className="auth-form">
         <div className="auth-header">
           <h2>Check Your Email</h2>
-          <p>We've sent password reset instructions to your email address.</p>
+          <p>We've sent password reset instructions to your email address (if an account exists).</p>
         </div>
 
         <div className="auth-form-content">
           <div className="success-message">
             <span className="success-icon">✓</span>
-            <p>If an account with that email exists, you'll receive a password reset link shortly.</p>
+            <p>If an account with that username/email exists, you'll receive a password reset link shortly.</p>
           </div>
 
           <button 
@@ -66,7 +61,7 @@ const ForgotPassword = ({ onSwitchToLogin }) => {
     <div className="auth-form">
       <div className="auth-header">
         <h2>Forgot Password</h2>
-        <p>Enter your email address and we'll send you a link to reset your password.</p>
+        <p>Enter your username or email address and we'll send you a link to reset your password.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="auth-form-content">
@@ -77,9 +72,9 @@ const ForgotPassword = ({ onSwitchToLogin }) => {
         )}
 
         <div className="form-group">
-          <label htmlFor="email">Email Address</label>
+          <label htmlFor="email">Username or Email</label>
           <input
-            type="email"
+            type="text"
             id="email"
             name="email"
             value={email}
@@ -88,7 +83,7 @@ const ForgotPassword = ({ onSwitchToLogin }) => {
               if (error) setError('');
             }}
             className={error ? 'error' : ''}
-            placeholder="Enter your email"
+            placeholder="Enter your username or email"
             disabled={loading}
           />
         </div>

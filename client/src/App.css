@@ -696,3 +696,145 @@ button:hover, .auto-suggest-btn:hover, .nav-button:hover {
     justify-content: center;
   }
 }
+
+/* User Menu Dropdown Styles */
+.user-menu {
+  position: relative;
+}
+
+.username-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.username {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  display: block;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.username:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  min-width: 150px;
+  z-index: 1000;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 20px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-right: none;
+  transform: rotate(45deg);
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #2d3748;
+  border-radius: 0;
+}
+
+.dropdown-item:hover {
+  background: #f7fafc;
+  transform: none;
+  box-shadow: none;
+}
+
+.dropdown-item.logout {
+  color: #e53e3e;
+}
+
+.dropdown-item.logout:hover {
+  background: #fff5f5;
+  color: #c53030;
+}
+
+/* Dark mode dropdown styles */
+.dark-mode .dropdown-menu {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-mode .dropdown-menu::before {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark-mode .dropdown-item {
+  color: #e2e8f0;
+}
+
+.dark-mode .dropdown-item:hover {
+  background: #4a5568;
+}
+
+.dark-mode .dropdown-item.logout {
+  color: #fc8181;
+}
+
+.dark-mode .dropdown-item.logout:hover {
+  background: #742a2a;
+  color: #fed7d7;
+}
+
+.dark-mode .username {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .username:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive dropdown */
+@media (max-width: 768px) {
+  .username {
+    max-width: 120px;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .dropdown-menu {
+    min-width: 130px;
+    right: -10px;
+  }
+  
+  .dropdown-menu::before {
+    right: 15px;
+  }
+}

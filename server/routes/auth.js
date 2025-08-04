@@ -24,9 +24,9 @@ const createEmailTransporter = () => {
 // Validation rules
 const registerValidation = [
   body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email address'),
+    .trim()
+    .notEmpty()
+    .withMessage('Username or email is required'),
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long')
@@ -34,9 +34,9 @@ const registerValidation = [
 
 const loginValidation = [
   body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email address'),
+    .trim()
+    .notEmpty()
+    .withMessage('Username or email is required'),
   body('password')
     .notEmpty()
     .withMessage('Password is required')
@@ -44,9 +44,9 @@ const loginValidation = [
 
 const forgotPasswordValidation = [
   body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email address')
+    .trim()
+    .notEmpty()
+    .withMessage('Username or email is required')
 ];
 
 const resetPasswordValidation = [
@@ -78,7 +78,7 @@ router.post('/register', authLimiter, registerValidation, async (req, res) => {
     if (existingUser) {
       return res.status(409).json({
         status: 'error',
-        message: 'User with this email already exists'
+        message: 'User with this username/email already exists'
       });
     }
 
@@ -136,7 +136,7 @@ router.post('/login', authLimiter, loginValidation, async (req, res) => {
     if (!user) {
       return res.status(401).json({
         status: 'error',
-        message: 'Invalid email or password'
+        message: 'Invalid username/email or password'
       });
     }
 
@@ -156,7 +156,7 @@ router.post('/login', authLimiter, loginValidation, async (req, res) => {
       await user.incLoginAttempts();
       return res.status(401).json({
         status: 'error',
-        message: 'Invalid email or password'
+        message: 'Invalid username/email or password'
       });
     }
 
@@ -211,7 +211,7 @@ router.post('/forgot-password', passwordResetLimiter, forgotPasswordValidation, 
     const user = await User.findOne({ email });
     
     // Always return success message for security (don't reveal if email exists)
-    const successMessage = 'If an account with that email exists, a password reset link has been sent.';
+    const successMessage = 'If an account with that username/email exists, a password reset link has been sent.';
     
     if (!user) {
       return res.json({

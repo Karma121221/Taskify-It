@@ -14,6 +14,7 @@ require('dotenv').config();
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const historyRoutes = require('./routes/history');
 
 const app = express();
 
@@ -46,29 +47,22 @@ const corsOptions = {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    const allowedOrigins = process.env.NODE_ENV === 'production' 
-      ? [
-          'https://taskify-it.vercel.app',
-          /^https:\/\/taskify-it-.*\.vercel\.app$/,
-          /^https:\/\/.*\.vercel\.app$/
-        ]
-      : ['http://localhost:3000', 'http://127.0.0.1:3000'];
-    
-    // Check if origin is allowed
-    const isAllowed = allowedOrigins.some(allowedOrigin => {
-      if (typeof allowedOrigin === 'string') {
-        return allowedOrigin === origin;
-      } else if (allowedOrigin instanceof RegExp) {
-        return allowedOrigin.test(origin);
-      }
-      return false;
-    });
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Allow localhost for development
+    if (origin === 'http://localhost:3000' || origin === 'http://localhost:3001') {
+      return callback(null, true);
     }
+    
+    // Allow production client URL
+    if (process.env.NODE_ENV === 'production' && origin === process.env.CLIENT_URL) {
+      return callback(null, true);
+    }
+    
+    // Allow Vercel deployments
+    if (origin && origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   optionsSuccessStatus: 200
@@ -80,8 +74,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
+  res.status(200).json({
+    status: 'success',
+    message: 'Server is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
@@ -89,10 +84,10 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Taskify-It API is working!',
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
+  res.status(200).json({
+    status: 'success',
+    message: 'Welcome to Taskify It API',
+    version: '1.0.0'
   });
 });
 
@@ -100,14 +95,14 @@ app.get('/', (req, res) => {
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  maxPoolSize: 10, // Maintain up to 10 socket connections
-  serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-  family: 4 // Use IPv4, skip trying IPv6
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  family: 4
 })
 .then(() => {
   console.log('✅ Connected to MongoDB');
-  console.log('📊 Database Name:', mongoose.connection.name);
+  console.log('📊 Database Name:', mongoose.connection.db.databaseName);
 })
 .catch(err => {
   console.error('❌ MongoDB connection error:', err);
@@ -116,15 +111,30 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // MongoDB connection events
 mongoose.connection.on('error', err => {
-  console.error('❌ MongoDB connection error:', err);
+  console.error('MongoDB connection error:', err);
 });
 
 mongoose.connection.on('disconnected', () => {
   console.log('⚠️ MongoDB disconnected');
 });
 
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\nSIGINT received. Shutting down gracefully...');
+  try {
+    // Close MongoDB connection without callback (Mongoose v8+)
+    await mongoose.connection.close();
+    console.log('✅ MongoDB connection closed');
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error closing MongoDB connection:', err);
+    process.exit(1);
+  }
+});
+
 // Routes
 app.use('/auth', authRoutes);
+app.use('/history', historyRoutes);
 
 // 📁 Set up multer for file upload with better error handling
 const upload = multer({ 
@@ -133,10 +143,11 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
+    // Accept only PDF files
     if (file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF files are allowed'));
+      cb(new Error('Only PDF files are allowed'), false);
     }
   }
 });
@@ -145,12 +156,20 @@ const upload = multer({
 app.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
+      return res.status(400).json({
+        status: 'error',
+        message: 'File size too large. Maximum file size is 10MB.'
+      });
     }
   }
+  
   if (error.message === 'Only PDF files are allowed') {
-    return res.status(400).json({ error: 'Only PDF files are allowed' });
+    return res.status(400).json({
+      status: 'error',
+      message: 'Invalid file type. Only PDF files are allowed.'
+    });
   }
+  
   next(error);
 });
 
@@ -158,217 +177,278 @@ app.use((error, req, res, next) => {
 app.post('/upload-pdf', upload.single('pdf'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No PDF file uploaded' });
+      return res.status(400).json({
+        status: 'error',
+        message: 'No file uploaded. Please select a PDF file.'
+      });
     }
 
+    // Parse PDF
     const dataBuffer = fs.readFileSync(req.file.path);
-    const pdfData = await pdfParse(dataBuffer);
-
-    // Delete uploaded file after reading
-    try {
-      fs.unlinkSync(req.file.path);
-    } catch (unlinkError) {
-      console.warn('Warning: Could not delete temporary file:', unlinkError.message);
-    }
-
-    res.json({ text: pdfData.text });
-  } catch (error) {
-    console.error('Error processing PDF:', error);
+    const data = await pdfParse(dataBuffer);
     
-    // Clean up file if it exists
-    if (req.file && req.file.path) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (unlinkError) {
-        console.warn('Warning: Could not delete temporary file after error:', unlinkError.message);
+    // Clean up temporary file
+    fs.unlinkSync(req.file.path);
+    
+    // Return extracted text
+    res.json({
+      status: 'success',
+      message: 'PDF uploaded and parsed successfully',
+      data: {
+        text: data.text,
+        numPages: data.numpages,
+        info: data.info
       }
+    });
+  } catch (error) {
+    console.error('PDF processing error:', error);
+    
+    // Clean up temporary file if it exists
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
     }
     
-    res.status(500).json({ error: 'Failed to read PDF' });
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to process PDF. Please try again with a valid PDF file.'
+    });
   }
 });
 
+// 🤖 Route: Generate tasks using Gemini API
 app.post('/generate-tasks', async (req, res) => {
-  const { syllabusText } = req.body;
-
-  if (!syllabusText) {
-    return res.status(400).json({ error: 'Missing syllabus text' });
-  }
-
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(500).json({ error: 'API key not configured' });
-  }
-
   try {
-    const prompt = `
-I have this syllabus content:
+    const { syllabusText } = req.body;
+    
+    if (!syllabusText) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Syllabus text is required'
+      });
+    }
 
-"${syllabusText.slice(0, 3000)}"
+    // Check if syllabus text is too short
+    if (syllabusText.trim().length < 50) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Syllabus text is too short. Please provide a more detailed syllabus.'
+      });
+    }
 
-From it, extract:
-1. 5–15 main topics/modules.
-2. 3–5 action-based learning tasks per topic.
-3. For each task, include 1–3 useful online study resources (official docs, YouTube tutorials, blog links, etc.).
-4. Return the result as JSON like:
+    // Prepare prompt for Gemini API
+    const prompt = `You are an educational assistant that helps students organize their study materials. 
+    Based on the following syllabus, create a structured study plan with topics, subtopics, and tasks.
+    
+    Syllabus:
+    ${syllabusText}
+    
+    Please provide the response in the following JSON format:
+    {
+      "topics": [
+        {
+          "topic": "Main topic name",
+          "tasks": [
+            {
+              "description": "Specific task or subtopic to study",
+              "resources": [
+                {
+                  "title": "Resource title",
+                  "url": "https://example.com"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+    
+    Guidelines:
+    1. Break down the syllabus into 3-7 main topics
+    2. Each topic should have 3-8 specific tasks
+    3. Include relevant online resources for each task (2-4 per task)
+    4. Make tasks actionable and specific
+    5. Focus on understanding concepts rather than just reading
+    6. Provide diverse resource types (videos, articles, tutorials)
+    7. Ensure all URLs are valid and accessible
+    8. Return ONLY valid JSON, no other text`;
 
-[
-  {
-    "topic": "Topic Name",
-    "tasks": [
-      {
-        "description": "Task 1 description",
-        "resources": [
-          { "title": "Resource Title", "url": "https://..." }
-        ]
-      }
-    ]
-  }
-]
-`;
-
+    // Call Gemini API with the new endpoint
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: prompt }],
-          },
-        ],
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 1,
+          topP: 1,
+          maxOutputTokens: 4096,
+        }
       },
       {
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        timeout: 30000, // 30 second timeout
+        timeout: 30000 // 30 second timeout
       }
     );
 
-    if (!response.data.candidates || !response.data.candidates[0]) {
-      throw new Error('Invalid response from AI service');
+    // Extract and parse the response
+    const geminiResponse = response.data;
+    let textResponse = '';
+    
+    if (geminiResponse.candidates && geminiResponse.candidates[0].content) {
+      textResponse = geminiResponse.candidates[0].content.parts[0].text;
+    } else {
+      throw new Error('Invalid response format from Gemini API');
     }
 
-    let reply = response.data.candidates[0].content.parts[0].text;
+    // Extract JSON from response (remove any markdown formatting)
+    let jsonString = textResponse.trim();
+    if (jsonString.startsWith('```json')) {
+      jsonString = jsonString.substring(7, jsonString.length - 3);
+    } else if (jsonString.startsWith('```')) {
+      jsonString = jsonString.substring(3, jsonString.length - 3);
+    }
 
-    // Remove Markdown code block if present
-    reply = reply.replace(/```json|```/g, '').trim();
-
+    // Parse JSON
+    let parsedResponse;
     try {
-      const cleaned = JSON.parse(reply);
-      res.json({ topics: cleaned });
+      parsedResponse = JSON.parse(jsonString);
     } catch (parseError) {
       console.error('JSON parsing error:', parseError);
-      res.status(500).json({ error: 'Failed to parse AI response' });
+      console.error('Raw response:', textResponse);
+      throw new Error('Failed to parse response from AI. Please try again.');
     }
 
-  } catch (err) {
-    console.error('Task generation error:', err.message);
-    if (err.response) {
-      console.error('API Error Response:', err.response.data);
+    // Validate response structure
+    if (!parsedResponse.topics || !Array.isArray(parsedResponse.topics)) {
+      throw new Error('Invalid response structure from AI');
     }
-    res.status(500).json({ error: 'Failed to generate tasks' });
+
+    // Validate each topic
+    parsedResponse.topics.forEach((topic, index) => {
+      if (!topic.topic || !topic.tasks || !Array.isArray(topic.tasks)) {
+        throw new Error(`Invalid topic structure at index ${index}`);
+      }
+      
+      topic.tasks.forEach((task, taskIndex) => {
+        if (!task.description) {
+          throw new Error(`Task ${taskIndex} in topic ${index} missing description`);
+        }
+        
+        if (task.resources && !Array.isArray(task.resources)) {
+          throw new Error(`Invalid resources structure in task ${taskIndex} of topic ${index}`);
+        }
+      });
+    });
+
+    res.json({
+      status: 'success',
+      message: 'Study plan generated successfully',
+      topics: parsedResponse.topics
+    });
+
+  } catch (error) {
+    console.error('Task generation error:', error);
+    
+    // Handle specific error cases
+    if (error.response) {
+      // API error response
+      if (error.response.status === 401) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Invalid API key. Please contact the administrator.'
+        });
+      }
+      
+      if (error.response.status === 429) {
+        return res.status(429).json({
+          status: 'error',
+          message: 'API rate limit exceeded. Please try again later.'
+        });
+      }
+
+      if (error.response.status === 404) {
+        return res.status(503).json({
+          status: 'error',
+          message: 'AI service is temporarily unavailable. Please try again later.'
+        });
+      }
+    }
+    
+    // Generic error response
+    res.status(500).json({
+      status: 'error',
+      message: error.message || 'Failed to generate study plan. Please try again.'
+    });
   }
 });
 
+// 📄 Route: Export tasks to PDF
 app.post('/export-pdf', async (req, res) => {
-  const { htmlContent } = req.body;
-
-  if (!htmlContent) {
-    return res.status(400).json({ error: 'Missing HTML content' });
-  }
-
-  let browser;
   try {
-    // Enhanced Puppeteer configuration for Render
-    browser = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor'
-      ],
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-    });
+    const { htmlContent } = req.body;
+    
+    if (!htmlContent) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'HTML content is required'
+      });
+    }
 
+    // Launch Puppeteer browser
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    
     const page = await browser.newPage();
-
+    
+    // Set content
     await page.setContent(htmlContent, {
-      waitUntil: 'networkidle0',
-      timeout: 30000,
+      waitUntil: 'domcontentloaded'
     });
-
+    
+    // Generate PDF
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
       margin: {
-        top: '20mm',
-        bottom: '20mm',
-        left: '15mm',
-        right: '15mm',
-      },
-      timeout: 30000,
-    });
-
-    await browser.close();
-
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="study-plan.pdf"',
-      'Content-Length': pdfBuffer.length,
-    });
-
-    res.send(pdfBuffer);
-  } catch (err) {
-    console.error('PDF export failed:', err);
-    if (browser) {
-      try {
-        await browser.close();
-      } catch (closeError) {
-        console.error('Error closing browser:', closeError);
+        top: '20px',
+        right: '20px',
+        bottom: '20px',
+        left: '20px'
       }
-    }
-    res.status(500).json({ error: 'Failed to generate PDF' });
+    });
+    
+    // Close browser
+    await browser.close();
+    
+    // Send PDF as response
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=study-plan.pdf');
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error('PDF export error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to generate PDF. Please try again.'
+    });
   }
 });
 
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  
-  // Don't leak error details in production
-  const message = process.env.NODE_ENV === 'production' 
-    ? 'Something went wrong!' 
-    : err.message;
-    
-  res.status(500).json({ 
-    status: 'error',
-    message 
-  });
-});
-
-// Handle 404
-app.use('*', (req, res) => {
-  res.status(404).json({ 
-    status: 'error',
-    message: 'Route not found' 
-  });
-});
-
-// 🚀 Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📊 MongoDB URI configured: ${!!process.env.MONGO_URI}`);
   console.log(`🔑 Gemini API configured: ${!!process.env.GEMINI_API_KEY}`);
-  console.log(`📧 Email configured: ${!!(process.env.EMAIL_USER && process.env.EMAIL_PASS)}`);
+  console.log(`📧 Email configured: ${!!process.env.EMAIL_USER}`);
 });
 
 // Graceful shutdown
