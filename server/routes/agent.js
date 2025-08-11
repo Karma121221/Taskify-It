@@ -22,8 +22,9 @@ const cleanPlanData = (planData) => {
         title: resource.title || 'Resource',
         url: resource.url || '#'
       })).filter(resource => resource.title && resource.title !== '')
-    }))
-  }));
+        .slice(0, 5) // Limit to 5 resources max
+    })).filter(task => task.description && task.description !== 'No description')
+  })).filter(module => module.topic && module.topic !== 'Untitled Topic');
   
   return {
     ...planData,
@@ -104,7 +105,13 @@ ${pdfText}`;
       cleanedText = cleanedText.replace(/```\n?/, '').replace(/\n?```$/, '');
     }
     
-    return JSON.parse(cleanedText);
+    try {
+      return JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error('JSON parsing error for structure:', parseError.message);
+      console.error('Raw response:', cleanedText);
+      throw new Error('Invalid JSON response from AI service');
+    }
   } catch (error) {
     console.error('Gemini structuring error:', error.message);
     throw new Error('Failed to structure syllabus content');
@@ -175,7 +182,13 @@ Make tasks specific and actionable. Provide 3-5 modules with 2-4 tasks each. Inc
       cleanedText = cleanedText.replace(/```\n?/, '').replace(/\n?```$/, '');
     }
     
-    return JSON.parse(cleanedText);
+    try {
+      return JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error('JSON parsing error for tasks:', parseError.message);
+      console.error('Raw response:', cleanedText);
+      throw new Error('Invalid JSON response from AI service');
+    }
   } catch (error) {
     console.error('Gemini task generation error:', error.message);
     throw new Error('Failed to generate study tasks');

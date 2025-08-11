@@ -177,7 +177,18 @@ function AppContent() {
       }
     } catch (err) {
       console.error(err);
-      setError('❌ Failed to upload or generate tasks. Please try again.');
+      let errorMessage = '❌ Failed to upload or generate tasks. Please try again.';
+      
+      // Check for backend connection issues
+      if (err.code === 'ECONNREFUSED' || err.response?.status >= 500 || !err.response) {
+        errorMessage = '⏳ Backend services are starting up (Render free tier). Please wait 30-60 seconds and try again...';
+      } else if (err.response?.status === 413) {
+        errorMessage = '❌ File too large. Please use a smaller PDF (under 10MB).';
+      } else if (err.response?.data?.message) {
+        errorMessage = `❌ ${err.response.data.message}`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
