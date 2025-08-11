@@ -28,7 +28,16 @@ const AutoPlanAgentModal = ({ open, onClose, jobId, onPlanReady }) => {
         }
       } catch (err) {
         console.error('Job polling error:', err);
-        setError(err.response?.data?.message || 'Network error');
+        let errorMessage = 'Network error';
+        
+        // Check if it's a connection error (likely Render services sleeping)
+        if (err.code === 'ECONNREFUSED' || err.response?.status >= 500 || !err.response) {
+          errorMessage = '⏳ Backend services are starting up (Render free tier). Please wait 30-60 seconds and try again...';
+        } else {
+          errorMessage = err.response?.data?.message || 'Network error';
+        }
+        
+        setError(errorMessage);
       }
     };
 

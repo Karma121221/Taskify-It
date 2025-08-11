@@ -271,6 +271,7 @@ router.post('/syllabus-plan/start', authenticate, startJobValidation, async (req
         { name: 'Save', status: 'pending', detail: null }
       ],
       result: null,
+      originalInput: pdfText, // Store for retry
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -378,7 +379,11 @@ router.post('/jobs/:jobId/retry', authenticate, async (req, res) => {
     job.status = 'pending';
     job.updatedAt = new Date();
     
-    // Note: This is a simplified retry - in production you'd want to store original input
+    // Restart processing with original input
+    if (job.originalInput) {
+      setImmediate(() => processJob(jobId, job.originalInput, job.userId));
+    }
+    
     res.json({
       status: 'success',
       message: 'Job retry initiated'
