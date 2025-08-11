@@ -1,5 +1,13 @@
 {
   "dependencies": {
     "@vercel/analytics": "^1.5.0"
+  },
+  "scripts": {
+    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm start\"",
+    "start": "concurrently \"cd server && npm start\" \"cd client && npm start\"",
+    "install-all": "npm install && cd server && npm install && cd client && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0"
   }
 }

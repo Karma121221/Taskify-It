@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-function Navbar({ modules, showDashboard, onExportPdf, onToggleDashboard, onOpenAuth, onNavigateToHistory }) {
+function Navbar({ modules, showDashboard, onExportPdf, onToggleDashboard, onOpenAuth, onNavigateToHistory, hasRunningJobs = false }) {
   const { user, logout, isAuthenticated } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -39,6 +39,12 @@ function Navbar({ modules, showDashboard, onExportPdf, onToggleDashboard, onOpen
       <div className="nav-left">
         <h1>Taskify It!</h1>
         <div className="nav-tagline">Upload your syllabus to generate personalized study tasks</div>
+        {hasRunningJobs && (
+          <div className="running-badge">
+            <span className="running-spinner">⏳</span>
+            <span>Processing...</span>
+          </div>
+        )}
       </div>
       <div className="nav-right">
         {modules.length > 0 && (

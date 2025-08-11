@@ -7,6 +7,7 @@ import Navbar from './components/navbar';
 import Dashboard from './components/dashboard';
 import History from './components/History';
 import AutoSuggestModal from './components/AutoSuggestModal';
+import AutoPlanAgentModal from './components/AutoPlanAgentModal';
 import AuthModal from './components/auth/AuthModal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import config from './config';
@@ -30,6 +31,8 @@ function AppContent() {
   const [showAutoSuggest, setShowAutoSuggest] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
+  const [showAgentModal, setShowAgentModal] = useState(false);
+  const [currentJobId, setCurrentJobId] = useState(null);
 
   const { loading: authLoading, isAuthenticated } = useAuth();
   const contentRef = useRef();
@@ -140,11 +143,30 @@ function AppContent() {
       
       // Save syllabus text
       setSyllabusText(text);
-  
+
+      // If user is authenticated, use the agent for processing
+      if (isAuthenticated) {
+        // Start the agent job
+        const token = localStorage.getItem('token');
+        const agentRes = await axios.post('/agent/syllabus-plan/start', {
+          pdfText: text
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        setCurrentJobId(agentRes.data.jobId);
+        setShowAgentModal(true);
+        setLoading(false);
+        return;
+      }
+
+      // Fall back to direct generation for non-authenticated users
       const genRes = await axios.post('/generate-tasks', {
         syllabusText: text,
       });
-  
+
       const generatedModules = genRes.data.topics;
       setModules(generatedModules);
       
@@ -277,6 +299,21 @@ function AppContent() {
     }));
   };
 
+  // Handle agent plan ready
+  const handlePlanReady = (planData) => {
+    if (planData && planData.modules) {
+      setModules(planData.modules);
+      setCheckedTasks({}); // Reset checked tasks
+      setTaskDates({}); // Reset task dates
+    }
+  };
+
+  // Close agent modal
+  const handleCloseAgentModal = () => {
+    setShowAgentModal(false);
+    setCurrentJobId(null);
+  };
+
   const handleOpenAuth = (mode = 'login') => {
     setAuthMode(mode);
     setShowAuthModal(true);
@@ -311,6 +348,7 @@ function AppContent() {
         onToggleDashboard={toggleDashboard}
         onOpenAuth={handleOpenAuth}
         onNavigateToHistory={navigateToHistory}
+        hasRunningJobs={showAgentModal && currentJobId}
       />
 
       <div className="content">
@@ -408,6 +446,13 @@ function AppContent() {
         isOpen={showAutoSuggest}
         onClose={() => setShowAutoSuggest(false)}
         onApplySuggestions={handleAutoSuggest}
+      />
+
+      <AutoPlanAgentModal
+        open={showAgentModal}
+        onClose={handleCloseAgentModal}
+        jobId={currentJobId}
+        onPlanReady={handlePlanReady}
       />
 
       <AuthModal

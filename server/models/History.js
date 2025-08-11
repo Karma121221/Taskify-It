@@ -32,12 +32,17 @@ const historySchema = new mongoose.Schema({
         },
         url: {
           type: String,
-          required: true,
-          trim: true
+          required: false,
+          trim: true,
+          default: '#'
         }
       }]
     }]
-  }]
+  }],
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  }
 }, {
   timestamps: true,
   collection: 'history'

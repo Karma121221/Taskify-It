@@ -15,6 +15,7 @@ require('dotenv').config();
 // Import routes
 const authRoutes = require('./routes/auth');
 const historyRoutes = require('./routes/history');
+const agentRoutes = require('./routes/agent');
 
 const app = express();
 
@@ -143,6 +144,7 @@ process.on('SIGINT', async () => {
 // Routes
 app.use('/auth', authRoutes);
 app.use('/history', historyRoutes);
+app.use('/agent', agentRoutes);
 
 // 📁 Set up multer for file upload with better error handling
 const upload = multer({ 
