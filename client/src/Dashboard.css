@@ -128,6 +128,7 @@
   border-left: 4px solid #4299e1;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
+  min-width: 0;
 }
 
 .deadline-item:hover {
@@ -138,6 +139,9 @@
 .deadline-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  margin-right: 1rem;
 }
 
 .deadline-task {
@@ -158,6 +162,8 @@
   background: #ebf8ff;
   border-radius: 20px;
   font-size: 0.9rem;
+  white-space: nowrap;
+  min-width: fit-content;
 }
 
 .days-left .urgent {
@@ -236,21 +242,33 @@
   .deadline-item {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .deadline-info {
+    margin-right: 0;
+    width: 100%;
   }
   
   .days-left {
-    margin-top: 0.75rem;
     align-self: flex-end;
+    margin-top: 0;
   }
 
   .overdue-item {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .overdue-info {
+    margin-right: 0;
+    width: 100%;
   }
   
   .reschedule-actions {
-    margin-top: 0.75rem;
     align-self: flex-end;
+    margin-top: 0;
   }
 }
 
@@ -285,6 +303,7 @@
   border: 1px solid #feb2b2;
   border-radius: 8px;
   transition: all 0.2s ease;
+  min-width: 0;
 }
 
 .overdue-item:hover {
@@ -297,6 +316,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  min-width: 0;
+  margin-right: 1rem;
 }
 
 .overdue-task {
@@ -321,12 +342,14 @@
   border: 1px solid #feb2b2;
   display: inline-block;
   margin-top: 0.25rem;
+  white-space: nowrap;
 }
 
 .reschedule-actions {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .reschedule-btn {

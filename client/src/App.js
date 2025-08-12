@@ -467,7 +467,7 @@ function AppContent() {
                                     />
                                     <label>{task.description}</label>
                                     {isOverdue && (
-                                      <span className="overdue-badge">⚠️ Overdue</span>
+                                      <span className="overdue-badge">Overdue</span>
                                     )}
                                   </div>
                                   {task.resources && (
