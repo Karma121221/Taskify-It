@@ -200,3 +200,85 @@
 .dark-mode .deadlines-container p {
   color: #d1d5db;
 }
+
+/* Dark mode overdue tasks styles */
+.dark-mode .overdue-container h3 {
+  color: #f87171;
+}
+
+.dark-mode .overdue-item {
+  background: #3f1c1c;
+  border-color: #7f1d1d;
+}
+
+.dark-mode .overdue-item:hover {
+  background: #4a1e1e;
+  box-shadow: 0 2px 8px rgba(248, 113, 113, 0.15);
+}
+
+.dark-mode .overdue-task {
+  color: #fca5a5;
+}
+
+.dark-mode .overdue-date {
+  color: #fbb6b2;
+}
+
+.dark-mode .days-overdue {
+  background: #7f1d1d;
+  color: #fca5a5;
+  border-color: #991b1b;
+}
+
+.dark-mode .reschedule-week {
+  background: linear-gradient(45deg, #2d6d6d, #285e5e);
+}
+
+.dark-mode .reschedule-week:hover {
+  background: linear-gradient(45deg, #285e5e, #234b4b);
+  box-shadow: 0 4px 8px rgba(45, 109, 109, 0.25);
+}
+
+.dark-mode .reschedule-days {
+  background: linear-gradient(45deg, #2563eb, #1d4ed8);
+}
+
+.dark-mode .reschedule-days:hover {
+  background: linear-gradient(45deg, #1d4ed8, #1e40af);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25);
+}
+
+/* Dark mode main task view overdue styles */
+.dark-mode .task-item.overdue-task {
+  background: #2d1b1b;
+  border-color: #7f1d1d;
+}
+
+.dark-mode .task-item.overdue-task:hover {
+  background: #3f1c1c;
+  box-shadow: 0 8px 20px rgba(248, 113, 113, 0.15);
+}
+
+.dark-mode .overdue-badge {
+  background: #7f1d1d;
+  color: #fca5a5;
+  border-color: #991b1b;
+}
+
+.dark-mode .task-reschedule-actions .reschedule-week {
+  background: linear-gradient(45deg, #2d6d6d, #285e5e);
+}
+
+.dark-mode .task-reschedule-actions .reschedule-week:hover {
+  background: linear-gradient(45deg, #285e5e, #234b4b);
+  box-shadow: 0 3px 6px rgba(45, 109, 109, 0.25);
+}
+
+.dark-mode .task-reschedule-actions .reschedule-days {
+  background: linear-gradient(45deg, #2563eb, #1d4ed8);
+}
+
+.dark-mode .task-reschedule-actions .reschedule-days:hover {
+  background: linear-gradient(45deg, #1d4ed8, #1e40af);
+  box-shadow: 0 3px 6px rgba(37, 99, 235, 0.25);
+}

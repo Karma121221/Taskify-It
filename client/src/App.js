@@ -175,6 +175,11 @@ function AppContent() {
         const title = pdfFile.name.replace('.pdf', '');
         await saveToHistory(generatedModules, title);
       }
+
+      // Auto-trigger the auto-suggest modal when tasks are generated
+      setTimeout(() => {
+        setShowAutoSuggest(true);
+      }, 500);
     } catch (err) {
       console.error(err);
       let errorMessage = '❌ Failed to upload or generate tasks. Please try again.';
@@ -281,6 +286,56 @@ function AppContent() {
     return upcomingDeadlines;
   };
 
+  // Calculate overdue tasks
+  const calculateOverdueTasks = () => {
+    const today = new Date();
+    let overdueTasks = [];
+    
+    // Get all tasks with deadlines that are past due
+    Object.entries(taskDates).forEach(([taskDesc, dateStr]) => {
+      if (dateStr && !checkedTasks[taskDesc]) {
+        const deadlineDate = new Date(dateStr);
+        if (deadlineDate < today) {
+          overdueTasks.push({
+            description: taskDesc,
+            date: deadlineDate,
+            daysOverdue: Math.ceil((today - deadlineDate) / (1000 * 60 * 60 * 24))
+          });
+        }
+      }
+    });
+    
+    // Sort by most overdue first
+    overdueTasks.sort((a, b) => b.daysOverdue - a.daysOverdue);
+    
+    return overdueTasks;
+  };
+
+  // Reschedule an overdue task
+  const rescheduleTask = (taskDescription, daysToAdd = 7) => {
+    const today = new Date();
+    const newDate = new Date(today);
+    newDate.setDate(today.getDate() + daysToAdd);
+    
+    setTaskDates(prev => ({
+      ...prev,
+      [taskDescription]: newDate.toISOString().split('T')[0]
+    }));
+  };
+
+  // Check if a task is overdue
+  const isTaskOverdue = (taskDescription) => {
+    const today = new Date();
+    const taskDate = taskDates[taskDescription];
+    
+    if (!taskDate || checkedTasks[taskDescription]) {
+      return false;
+    }
+    
+    const deadlineDate = new Date(taskDate);
+    return deadlineDate < today;
+  };
+
   // Toggle dashboard view
   const toggleDashboard = () => {
     setShowDashboard(!showDashboard);
@@ -316,6 +371,11 @@ function AppContent() {
       setModules(planData.modules);
       setCheckedTasks({}); // Reset checked tasks
       setTaskDates({}); // Reset task dates
+      
+      // Auto-trigger the auto-suggest modal when tasks are generated via agent
+      setTimeout(() => {
+        setShowAutoSuggest(true);
+      }, 500);
     }
   };
 
@@ -394,37 +454,61 @@ function AppContent() {
                       <div key={index} className="module">
                         <h3>{index + 1}. {module.topic}</h3>
                         <ul>
-                          {module.tasks.map((task, i) => (
-                            <li key={i} className="task-item">
-                              <div className="task-content">
-                                <div className="task-header">
-                                  <input
-                                    type="checkbox"
-                                    checked={!!checkedTasks[task.description]}
-                                    onChange={() => toggleCheck(task.description)}
-                                  />
-                                  <label>{task.description}</label>
+                          {module.tasks.map((task, i) => {
+                            const isOverdue = isTaskOverdue(task.description);
+                            return (
+                              <li key={i} className={`task-item ${isOverdue ? 'overdue-task' : ''}`}>
+                                <div className="task-content">
+                                  <div className="task-header">
+                                    <input
+                                      type="checkbox"
+                                      checked={!!checkedTasks[task.description]}
+                                      onChange={() => toggleCheck(task.description)}
+                                    />
+                                    <label>{task.description}</label>
+                                    {isOverdue && (
+                                      <span className="overdue-badge">⚠️ Overdue</span>
+                                    )}
+                                  </div>
+                                  {task.resources && (
+                                    <ul className="resources">
+                                      {task.resources.map((res, j) => (
+                                        <li key={j}>
+                                          🔗 <a href={res.url} target="_blank" rel="noreferrer">{res.title}</a>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
                                 </div>
-                                {task.resources && (
-                                  <ul className="resources">
-                                    {task.resources.map((res, j) => (
-                                      <li key={j}>
-                                        🔗 <a href={res.url} target="_blank" rel="noreferrer">{res.title}</a>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                              </div>
-                              <div className="date-section">
-                                <input
-                                  type="date"
-                                  className="date-picker"
-                                  value={taskDates[task.description] || ''}
-                                  onChange={(e) => handleDateChange(task.description, e.target.value)}
-                                />
-                              </div>
-                            </li>
-                          ))}
+                                <div className="date-section">
+                                  <input
+                                    type="date"
+                                    className="date-picker"
+                                    value={taskDates[task.description] || ''}
+                                    onChange={(e) => handleDateChange(task.description, e.target.value)}
+                                  />
+                                  {isOverdue && (
+                                    <div className="task-reschedule-actions">
+                                      <button 
+                                        className="reschedule-btn reschedule-week"
+                                        onClick={() => rescheduleTask(task.description, 7)}
+                                        title="Reschedule for next week"
+                                      >
+                                        +1 Week
+                                      </button>
+                                      <button 
+                                        className="reschedule-btn reschedule-days"
+                                        onClick={() => rescheduleTask(task.description, 3)}
+                                        title="Reschedule for 3 days"
+                                      >
+                                        +3 Days
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </li>
+                            );
+                          })}
                         </ul>
                       </div>
                     ))}
@@ -437,6 +521,8 @@ function AppContent() {
                 checkedTasks={checkedTasks}
                 calculateProgress={calculateProgress}
                 calculateTimeLeft={calculateTimeLeft}
+                calculateOverdueTasks={calculateOverdueTasks}
+                rescheduleTask={rescheduleTask}
                 onToggleDashboard={toggleDashboard}
               />
             )}

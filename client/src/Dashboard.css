@@ -242,4 +242,131 @@
     margin-top: 0.75rem;
     align-self: flex-end;
   }
+
+  .overdue-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .reschedule-actions {
+    margin-top: 0.75rem;
+    align-self: flex-end;
+  }
+}
+
+/* Overdue Tasks Styles */
+.overdue-container {
+  margin-bottom: 2rem;
+}
+
+.overdue-container h3 {
+  color: #e53e3e;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.overdue-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.overdue-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background: #fed7d7;
+  border: 1px solid #feb2b2;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.overdue-item:hover {
+  background: #fec5c5;
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.15);
+}
+
+.overdue-info {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.overdue-task {
+  font-weight: 600;
+  color: #742a2a;
+  font-size: 1rem;
+}
+
+.overdue-date {
+  font-size: 0.875rem;
+  color: #9c4221;
+  font-weight: 500;
+}
+
+.days-overdue {
+  font-size: 0.875rem;
+  color: #e53e3e;
+  font-weight: 700;
+  background: #fed7d7;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  border: 1px solid #feb2b2;
+  display: inline-block;
+  margin-top: 0.25rem;
+}
+
+.reschedule-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.reschedule-btn {
+  padding: 0.5rem 0.875rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.reschedule-week {
+  background: linear-gradient(45deg, #38b2ac, #319795);
+  color: white;
+}
+
+.reschedule-week:hover {
+  background: linear-gradient(45deg, #319795, #2c7a7b);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(56, 178, 172, 0.25);
+}
+
+.reschedule-days {
+  background: linear-gradient(45deg, #4299e1, #3182ce);
+  color: white;
+}
+
+.reschedule-days:hover {
+  background: linear-gradient(45deg, #3182ce, #2c5282);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(66, 153, 225, 0.25);
+}
+
+.reschedule-btn:active {
+  transform: translateY(0);
+}
+
+.reschedule-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
 }

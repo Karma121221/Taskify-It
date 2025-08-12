@@ -9,7 +9,6 @@ function AutoSuggestModal({
 }) {
   const [overallDeadline, setOverallDeadline] = useState('');
   const [distribution, setDistribution] = useState('even'); // 'even', 'priority', 'workload'
-  const [buffer, setBuffer] = useState(2); // days buffer before deadline
 
   if (!isOpen) return null;
 
@@ -18,7 +17,7 @@ function AutoSuggestModal({
 
     const deadline = new Date(overallDeadline);
     const today = new Date();
-    const totalDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24)) - buffer;
+    const totalDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
     
     if (totalDays <= 0) return {};
 
@@ -127,19 +126,6 @@ function AutoSuggestModal({
               <option value="priority">Priority-Based (More time for early topics)</option>
               <option value="workload">Workload-Based (Complex tasks get more time)</option>
             </select>
-          </div>
-
-          <div className="input-group">
-            <label htmlFor="buffer">Buffer Days Before Deadline</label>
-            <input
-              id="buffer"
-              type="range"
-              min="0"
-              max="7"
-              value={buffer}
-              onChange={(e) => setBuffer(parseInt(e.target.value))}
-            />
-            <span className="buffer-display">{buffer} days</span>
           </div>
 
           {overallDeadline && (

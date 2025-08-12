@@ -5,8 +5,12 @@ function Dashboard({
   checkedTasks, 
   calculateProgress, 
   calculateTimeLeft, 
+  calculateOverdueTasks,
+  rescheduleTask,
   onToggleDashboard 
 }) {
+  const overdueTasks = calculateOverdueTasks();
+
   return (
     <div className="dashboard">
       <div className="header-container">
@@ -26,6 +30,42 @@ function Dashboard({
           <span className="progress-text">{calculateProgress()}% Complete</span>
         </div>
       </div>
+
+      {/* Overdue Tasks Section */}
+      {overdueTasks.length > 0 && (
+        <div className="overdue-container">
+          <h3>⚠️ Overdue Tasks</h3>
+          <ul className="overdue-list">
+            {overdueTasks.map((task, index) => (
+              <li key={index} className="overdue-item">
+                <div className="overdue-info">
+                  <span className="overdue-task">{task.description}</span>
+                  <span className="overdue-date">Due: {task.date.toLocaleDateString()}</span>
+                  <span className="days-overdue">
+                    {task.daysOverdue} {task.daysOverdue === 1 ? 'day' : 'days'} overdue
+                  </span>
+                </div>
+                <div className="reschedule-actions">
+                  <button 
+                    className="reschedule-btn reschedule-week"
+                    onClick={() => rescheduleTask(task.description, 7)}
+                    title="Reschedule for next week"
+                  >
+                    +1 Week
+                  </button>
+                  <button 
+                    className="reschedule-btn reschedule-days"
+                    onClick={() => rescheduleTask(task.description, 3)}
+                    title="Reschedule for 3 days"
+                  >
+                    +3 Days
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       
       <div className="deadlines-container">
         <h3>Upcoming Deadlines</h3>
