@@ -45,8 +45,8 @@ const userSchema = new mongoose.Schema({
   collection: 'users'
 });
 
-// Index for email lookups
-userSchema.index({ email: 1 });
+// Note: Index removed to avoid duplicate with unique constraint
+// The unique: true on email field automatically creates an index
 
 // Virtual for checking if account is locked
 userSchema.virtual('isLocked').get(function() {

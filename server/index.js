@@ -7,8 +7,8 @@ const fs = require('fs');
 const axios = require('axios');
 const puppeteer = require('puppeteer');
 const helmet = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
+const mongoSanitize = require('mongo-sanitize');
+const xss = require('xss');
 const compression = require('compression');
 require('dotenv').config();
 
@@ -36,11 +36,44 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// Data sanitization against NoSQL query injection
-app.use(mongoSanitize());
+// Custom middleware for NoSQL injection sanitization (Express v5 compatible)
+app.use((req, res, next) => {
+  req.body = mongoSanitize(req.body);
+  req.query = mongoSanitize(req.query);
+  req.params = mongoSanitize(req.params);
+  next();
+});
 
-// Data sanitization against XSS
-app.use(xss());
+// Custom XSS protection middleware
+app.use((req, res, next) => {
+  if (req.body) {
+    req.body = sanitizeObject(req.body);
+  }
+  if (req.query) {
+    req.query = sanitizeObject(req.query);
+  }
+  if (req.params) {
+    req.params = sanitizeObject(req.params);
+  }
+  next();
+});
+
+// Helper function to sanitize objects recursively
+function sanitizeObject(obj) {
+  if (typeof obj === 'string') {
+    return xss(obj);
+  }
+  if (typeof obj === 'object' && obj !== null) {
+    const sanitized = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        sanitized[key] = sanitizeObject(obj[key]);
+      }
+    }
+    return sanitized;
+  }
+  return obj;
+}
 
 // Compression middleware
 app.use(compression());
@@ -102,8 +135,6 @@ app.get('/', (req, res) => {
 
 // Connect to MongoDB Atlas with better configuration
 mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
   maxPoolSize: 10,
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
