@@ -92,6 +92,22 @@ function AppContent() {
     }
   }, []);
 
+  // Wake up Render server immediately on app load
+  useEffect(() => {
+    const wakeUpServer = async () => {
+      try {
+        console.log('🚀 Waking up server...');
+        await axios.get('/health', { timeout: 10000 });
+        console.log('✅ Server is awake');
+      } catch (error) {
+        console.log('⏳ Server is starting up (this is normal on first load)');
+        // Silently fail - this is just to wake up the server
+      }
+    };
+
+    wakeUpServer();
+  }, []);
+
   // Save to history when modules are successfully generated
   const saveToHistory = async (modules, title = null) => {
     if (!isAuthenticated || modules.length === 0) return;

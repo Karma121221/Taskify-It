@@ -12,6 +12,7 @@ build/
 
 # Logs
 *.log*
+.github
 
 # Environment files
 .env*
