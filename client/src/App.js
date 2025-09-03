@@ -160,9 +160,9 @@ function AppContent() {
       // Save syllabus text
       setSyllabusText(text);
 
-      // If user is authenticated, use the agent for processing
+      // Always try to use the agent for processing (authenticated users get enhanced features)
       if (isAuthenticated) {
-        // Start the agent job
+        // Start the agent job for authenticated users
         const token = localStorage.getItem('token');
         const agentRes = await axios.post('/agent/syllabus-plan/start', {
           pdfText: text
@@ -176,26 +176,41 @@ function AppContent() {
         setShowAgentModal(true);
         setLoading(false);
         return;
+      } else {
+        // Show agent modal for non-authenticated users too, but use direct generation
+        setCurrentJobId('demo-job-' + Date.now());
+        setShowAgentModal(true);
+        
+        // Simulate agent steps for visual feedback
+        setTimeout(async () => {
+          try {
+            const genRes = await axios.post('/generate-tasks', {
+              syllabusText: text,
+            });
+
+            const generatedModules = genRes.data.topics;
+            setModules(generatedModules);
+            
+            // Save to history if user is authenticated
+            if (generatedModules && generatedModules.length > 0) {
+              await saveToHistory(generatedModules, `Study Session ${new Date().toLocaleDateString()}`);
+            }
+            
+            // Auto-trigger the auto-suggest modal when tasks are generated
+            setTimeout(() => {
+              setShowAutoSuggest(true);
+            }, 500);
+          } catch (err) {
+            console.error(err);
+            setError('Failed to generate tasks. Please try again.');
+          } finally {
+            setLoading(false);
+            setShowAgentModal(false);
+            setCurrentJobId(null);
+          }
+        }, 2000); // Show processing for 2 seconds
+        return;
       }
-
-      // Fall back to direct generation for non-authenticated users
-      const genRes = await axios.post('/generate-tasks', {
-        syllabusText: text,
-      });
-
-      const generatedModules = genRes.data.topics;
-      setModules(generatedModules);
-      
-      // Save to history if user is authenticated
-      if (isAuthenticated) {
-        const title = pdfFile.name.replace('.pdf', '');
-        await saveToHistory(generatedModules, title);
-      }
-
-      // Auto-trigger the auto-suggest modal when tasks are generated
-      setTimeout(() => {
-        setShowAutoSuggest(true);
-      }, 500);
     } catch (err) {
       console.error(err);
       let errorMessage = '❌ Failed to upload or generate tasks. Please try again.';
@@ -382,11 +397,16 @@ function AppContent() {
   };
 
   // Handle agent plan ready
-  const handlePlanReady = (planData) => {
+  const handlePlanReady = async (planData) => {
     if (planData && planData.modules) {
       setModules(planData.modules);
       setCheckedTasks({}); // Reset checked tasks
       setTaskDates({}); // Reset task dates
+      
+      // Save to history if user is authenticated
+      if (planData.modules && planData.modules.length > 0) {
+        await saveToHistory(planData.modules, `Agent Plan ${new Date().toLocaleDateString()}`);
+      }
       
       // Auto-trigger the auto-suggest modal when tasks are generated via agent
       setTimeout(() => {
@@ -442,7 +462,7 @@ function AppContent() {
         {showHistory ? (
           <History onBackToMain={navigateBackToMain} />
         ) : (
-          <>
+          <div className="main-content">
             {/* Upload Section */}
             <div className="upload-section">
               <input type="file" accept=".pdf" onChange={handleFileChange} />
@@ -542,7 +562,7 @@ function AppContent() {
                 onToggleDashboard={toggleDashboard}
               />
             )}
-          </>
+          </div>
         )}
       </div>
 

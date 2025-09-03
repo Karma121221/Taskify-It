@@ -66,7 +66,7 @@ function sanitizeObject(obj) {
   if (typeof obj === 'object' && obj !== null) {
     const sanitized = {};
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         sanitized[key] = sanitizeObject(obj[key]);
       }
     }
@@ -78,39 +78,73 @@ function sanitizeObject(obj) {
 // Compression middleware
 app.use(compression());
 
-// Enhanced CORS configuration for production
+// Enhanced CORS configuration for development and production
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Allow localhost for development
-    if (origin === 'http://localhost:3000' || origin === 'http://localhost:3001') {
-      return callback(null, true);
+    try {
+      console.log('CORS Origin Check:', origin);
+
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // In development, allow localhost/127.0.0.1 on any port
+      if (process.env.NODE_ENV !== 'production') {
+        if (
+          typeof origin === 'string' &&
+          (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))
+        ) {
+          return callback(null, true);
+        }
+      }
+
+      // Specific localhost fallbacks
+      if (origin === 'http://localhost:3000' || origin === 'http://localhost:3001') {
+        return callback(null, true);
+      }
+
+      // Allow production client URL
+      if (process.env.NODE_ENV === 'production' && process.env.CLIENT_URL && origin === process.env.CLIENT_URL) {
+        return callback(null, true);
+      }
+
+      // Allow Vercel and Render deployments
+      if (origin && (origin.includes('vercel.app') || origin.includes('onrender.com'))) {
+        return callback(null, true);
+      }
+
+      console.warn('CORS blocked origin:', origin);
+      // Do not throw an error (which results in 500). Instead, disable CORS for this request.
+      return callback(null, false);
+    } catch (e) {
+      console.error('CORS evaluation error:', e);
+      return callback(null, false);
     }
-    
-    // Allow production client URL
-    if (process.env.NODE_ENV === 'production' && origin === process.env.CLIENT_URL) {
-      return callback(null, true);
-    }
-    
-    // Allow Vercel deployments
-    if (origin && origin.includes('vercel.app')) {
-      return callback(null, true);
-    }
-    
-    // Allow Render deployments
-    if (origin && origin.includes('onrender.com')) {
-      return callback(null, true);
-    }
-    
-    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  // Use 204 for older browsers handling of preflight
+  optionsSuccessStatus: 204,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin'
+  ],
+  preflightContinue: false
 };
 
+// CORS must be mounted before routes
 app.use(cors(corsOptions));
+// Explicitly handle preflight for all routes (Express 5 path pattern)
+app.options(/.*/, cors(corsOptions));
+
+// Request logging middleware for debugging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.get('Origin') || 'none'}`);
+  next();
+});
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 

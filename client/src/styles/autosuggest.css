@@ -21,6 +21,7 @@
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: modalSlideIn 0.3s ease-out;
+  border: 1px solid #e5e7eb;
 }
 
 @keyframes modalSlideIn {
@@ -40,8 +41,8 @@
   align-items: center;
   padding: 1.5rem 2rem;
   border-bottom: 1px solid #e2e8f0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #1e293b;
   border-radius: 16px 16px 0 0;
 }
 
@@ -54,7 +55,7 @@
 .close-btn {
   background: none;
   border: none;
-  color: white;
+  color: #64748b;
   font-size: 1.25rem;
   cursor: pointer;
   padding: 0.25rem;
@@ -68,7 +69,8 @@
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.1);
+  color: #374151;
 }
 
 .modal-content {
@@ -101,8 +103,8 @@
 .input-group input:focus,
 .input-group select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   background: white;
 }
 
@@ -123,7 +125,7 @@
 .input-group input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  background: #667eea;
+  background: #3b82f6;
   height: 20px;
   width: 20px;
   border-radius: 50%;
@@ -135,8 +137,8 @@
   display: inline-block;
   margin-left: 1rem;
   font-weight: 600;
-  color: #667eea;
-  background: #f0f4ff;
+  color: #3b82f6;
+  background: #eff6ff;
   padding: 0.25rem 0.75rem;
   border-radius: 16px;
   font-size: 0.9rem;
@@ -175,7 +177,7 @@
   display: block;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #667eea;
+  color: #3b82f6;
   margin-bottom: 0.25rem;
 }
 
@@ -190,7 +192,7 @@
   background: white;
   padding: 1rem;
   border-radius: 8px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #3b82f6;
 }
 
 .distribution-info p {
@@ -232,14 +234,15 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
 }
 
 .btn-primary:disabled {
@@ -252,11 +255,13 @@
 /* Dark mode support */
 .dark-mode .auto-suggest-modal {
   background: #1f2937;
+  border-color: #374151;
 }
 
 .dark-mode .modal-header {
-  background: linear-gradient(90deg, #2d3748, #4a5568); /* Updated to match navbar */
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
   border-bottom-color: #374151;
+  color: #e5e7eb;
 }
 
 .dark-mode .modal-content {
@@ -276,7 +281,7 @@
 
 .dark-mode .input-group input:focus,
 .dark-mode .input-group select:focus {
-  border-color: #667eea;
+  border-color: #3b82f6;
   background: #4b5563;
 }
 
@@ -300,7 +305,7 @@
 
 .dark-mode .distribution-info {
   background: #1f2937;
-  border-left-color: #667eea;
+  border-left-color: #3b82f6;
 }
 
 .dark-mode .distribution-info p {
@@ -323,12 +328,12 @@
 }
 
 .dark-mode .btn-primary {
-  background: linear-gradient(45deg, #2d3748, #4a5568); /* Updated to match buttons */
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .dark-mode .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(45deg, #374151, #4a5568); /* Darker on hover */
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
@@ -380,6 +385,7 @@
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: modalSlideIn 0.3s ease-out;
+  border: 1px solid #e5e7eb;
 }
 
 .autosuggest-header {
@@ -388,8 +394,8 @@
   align-items: center;
   padding: 1.5rem 2rem;
   border-bottom: 1px solid #e2e8f0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #1e293b;
   border-radius: 16px 16px 0 0;
 }
 
@@ -416,7 +422,7 @@
 .close-btn {
   background: none;
   border: none;
-  color: white;
+  color: #64748b;
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.25rem;
@@ -425,7 +431,8 @@
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
+  color: #374151;
 }
 
 /* Job Progress Styles */
@@ -672,4 +679,51 @@
 
 .error-message p {
   margin: 0;
+}
+
+/* Dark mode styles for autosuggest/agent modals */
+.dark-mode .autosuggest-modal {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark-mode .autosuggest-header {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  border-bottom-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark-mode .close-btn {
+  color: #9ca3af;
+}
+
+.dark-mode .close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e5e7eb;
+}
+
+.dark-mode .autosuggest-content {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark-mode .autosuggest-footer {
+  background: #374151;
+  border-top-color: #4b5563;
+}
+
+.dark-mode .job-status-header h3 {
+  color: #e5e7eb;
+}
+
+.dark-mode .step-name {
+  color: #e5e7eb;
+}
+
+.dark-mode .step-detail {
+  color: #9ca3af;
+}
+
+.dark-mode .loading-state {
+  color: #9ca3af;
 }

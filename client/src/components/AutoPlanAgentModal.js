@@ -7,9 +7,27 @@ const AutoPlanAgentModal = ({ open, onClose, jobId, onPlanReady }) => {
   const [jobStatus, setJobStatus] = useState(null);
   const [error, setError] = useState(null);
   const [retrying, setRetrying] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     if (!open || !jobId) return;
+
+    // Check if this is a demo job for non-authenticated users
+    const isDemo = jobId.toString().startsWith('demo-job-');
+    setIsDemoMode(isDemo);
+
+    if (isDemo) {
+      // Simulate agent processing for demo mode
+      setJobStatus({
+        status: 'running',
+        steps: [
+          { name: 'Parsing PDF Content', status: 'running', detail: 'Extracting text from your syllabus...' },
+          { name: 'Analyzing Structure', status: 'pending', detail: null },
+          { name: 'Generating Study Plan', status: 'pending', detail: null }
+        ]
+      });
+      return;
+    }
 
     const pollJobStatus = async () => {
       try {
@@ -42,21 +60,29 @@ const AutoPlanAgentModal = ({ open, onClose, jobId, onPlanReady }) => {
     };
 
     // Initial fetch
-    pollJobStatus();
-
-    // Poll every second if job is running
-    const interval = setInterval(() => {
-      if (jobStatus?.status === 'success' || jobStatus?.status === 'error') {
-        clearInterval(interval);
-        return;
-      }
+    if (!isDemoMode) {
       pollJobStatus();
-    }, 1000);
 
-    return () => clearInterval(interval);
-  }, [open, jobId, retrying, jobStatus?.status]);
+      // Poll every second if job is running
+      const interval = setInterval(() => {
+        if (jobStatus?.status === 'success' || jobStatus?.status === 'error') {
+          clearInterval(interval);
+          return;
+        }
+        pollJobStatus();
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [open, jobId, retrying, jobStatus?.status, isDemoMode]);
 
   const handleRetry = async () => {
+    if (isDemoMode) {
+      // For demo mode, just close the modal and let parent handle retry
+      onClose();
+      return;
+    }
+
     try {
       setRetrying(true);
       setError(null);

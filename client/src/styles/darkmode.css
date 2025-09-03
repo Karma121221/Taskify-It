@@ -1,9 +1,20 @@
 /* Dark Mode Styles (extracted from App.css and Dashboard.css) */
 
-/* App root */
+/* App root - ensure full coverage */
 .App.dark-mode {
   background: #1a1a1a;
   color: #e2e8f0;
+  min-height: 100vh;
+}
+
+.dark-mode .content {
+  background: #1a1a1a;
+  min-height: calc(100vh - 80px); /* Account for navbar height */
+}
+
+.dark-mode .main-content {
+  background: #1a1a1a;
+  min-height: inherit;
 }
 
 /* Toggle button */
@@ -15,7 +26,16 @@
 
 /* Navbar */
 .dark-mode .navbar {
-  background: linear-gradient(90deg, #2d3748, #4a5568);
+  background: linear-gradient(90deg, #1f2937, #111827);
+}
+
+/* Nav buttons */
+.dark-mode .nav-button {
+  background: linear-gradient(45deg, #374151, #1f2937);
+}
+
+.dark-mode .nav-button:hover {
+  background: linear-gradient(45deg, #4b5563, #374151);
 }
 
 /* Upload section */
