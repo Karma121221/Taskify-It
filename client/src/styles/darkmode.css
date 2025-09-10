@@ -155,8 +155,10 @@
   border-color: #4a5568;
 }
 
+
 .dark-mode .progress-bar-container {
-  background: #4a5568;
+  background: #2f3b46; /* slightly darker container for contrast */
+  height: 1.25rem; /* keep consistent with light mode */
 }
 
 .dark-mode .progress-bar {
@@ -164,8 +166,9 @@
 }
 
 .dark-mode .progress-text {
-  color: #e2e8f0;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  color: #e6f2ff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  font-size: 0.95rem;
 }
 
 .dark-mode .deadline-item {
